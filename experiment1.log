@@ -1,0 +1,1120 @@
+# Task 0
+INFO: Start
+Traceback (most recent call last):
+  File "", line 396, in <module>
+    space, clusters = main(sys.argv[1])
+  File "", line 318, in main
+    input = list(map(float, line.split(',')))
+ValueError: could not convert string to float: 'All data are normalised\n'
+# Task 1
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4176
+INFO: Complete
+# Task 2
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4176
+INFO: Complete
+# Task 3
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4176
+INFO: Complete
+# Task 4
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4176
+INFO: Complete
+# Task 5
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4176
+INFO: Complete
+# Task 6
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4176
+INFO: Complete
+# Task 7
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4176
+INFO: Complete
+# Task 8
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4177
+INFO: Complete
+# Task 9
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4177
+INFO: Complete
+# Task 10
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4176
+INFO: Complete
+# Task 11
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4177
+INFO: Complete
+# Task 12
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4177
+INFO: Complete
+# Task 13
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4176
+INFO: Complete
+# Task 14
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4177
+INFO: Complete
+# Task 15
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4177
+INFO: Complete
+# Task 16
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4177
+INFO: Complete
+# Task 17
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4176
+INFO: Complete
+# Task 18
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4176
+INFO: Complete
+# Task 19
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4177
+INFO: Complete
+# Task 20
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 3278
+INFO: Complete
+# Task 21
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 8123
+INFO: Complete
+# Task 22
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 8123
+INFO: Complete
+# Task 23
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 8123
+INFO: Complete
+# Task 24
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 8123
+INFO: Complete
+# Task 25
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 8123
+INFO: Complete
+# Task 26
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 8123
+INFO: Complete
+# Task 27
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 8123
+INFO: Complete
+# Task 28
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 7199
+INFO: Complete
+# Task 29
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 7199
+INFO: Complete
+# Task 30
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 7199
+INFO: Complete
+# Task 31
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 624
+INFO: Complete
+# Task 32
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 624
+INFO: Complete
+# Task 33
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 624
+INFO: Complete
+# Task 34
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 539
+INFO: Complete
+# Task 35
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 698
+INFO: Complete
+# Task 36
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 698
+INFO: Complete
+# Task 37
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1727
+INFO: Complete
+# Task 38
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1727
+INFO: Complete
+# Task 39
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1727
+INFO: Complete
+# Task 40
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1727
+INFO: Complete
+# Task 41
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 302
+INFO: Complete
+# Task 42
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 302
+INFO: Complete
+# Task 43
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 302
+INFO: Complete
+# Task 44
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 302
+INFO: Complete
+# Task 45
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 302
+INFO: Complete
+# Task 46
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1472
+INFO: Complete
+# Task 47
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1472
+INFO: Complete
+# Task 48
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1472
+INFO: Complete
+# Task 49
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 689
+INFO: Complete
+# Task 50
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 365
+INFO: Complete
+# Task 51
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 365
+INFO: Complete
+# Task 52
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 365
+INFO: Complete
+# Task 53
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 365
+INFO: Complete
+# Task 54
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 365
+INFO: Complete
+# Task 55
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 365
+INFO: Complete
+# Task 56
+INFO: Start
+Traceback (most recent call last):
+  File "", line 396, in <module>
+    space, clusters = main(sys.argv[1])
+  File "", line 317, in main
+    for line in open(path, 'r'):
+FileNotFoundError: [Errno 2] No such file or directory: 'datasets/dir'
+# Task 57
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 336
+INFO: Complete
+# Task 58
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 335
+INFO: Complete
+# Task 59
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 335
+INFO: Complete
+# Task 60
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 335
+INFO: Complete
+# Task 61
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 335
+INFO: Complete
+# Task 62
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 194
+INFO: Complete
+# Task 63
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 193
+INFO: Complete
+# Task 64
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 193
+INFO: Complete
+# Task 65
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 193
+INFO: Complete
+# Task 66
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 193
+INFO: Complete
+# Task 67
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 214
+INFO: Complete
+# Task 68
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 213
+INFO: Complete
+# Task 69
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 214
+INFO: Complete
+# Task 70
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 213
+INFO: Complete
+# Task 71
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 213
+INFO: Complete
+# Task 72
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 306
+INFO: Complete
+# Task 73
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 160
+INFO: Complete
+# Task 74
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 159
+INFO: Complete
+# Task 75
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 159
+INFO: Complete
+# Task 76
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 154
+INFO: Complete
+# Task 77
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1212
+INFO: Complete
+# Task 78
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1212
+INFO: Complete
+# Task 79
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1211
+INFO: Complete
+# Task 80
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1212
+INFO: Complete
+# Task 81
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 434
+INFO: Complete
+# Task 82
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 293
+INFO: Complete
+# Task 83
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 149
+INFO: Complete
+# Task 84
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 149
+INFO: Complete
+# Task 85
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 149
+INFO: Complete
+# Task 86
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 87
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 88
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 89
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 90
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 91
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 92
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 93
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 94
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 95
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 96
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 97
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 98
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 99
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 100
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 101
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 102
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 103
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 104
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 105
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 106
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 107
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 108
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 109
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 110
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 111
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19999
+INFO: Complete
+# Task 112
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 19019
+INFO: Complete
+# Task 113
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 960
+INFO: Complete
+# Task 114
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 359
+INFO: Complete
+# Task 115
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 359
+INFO: Complete
+# Task 116
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 359
+INFO: Complete
+# Task 117
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 359
+INFO: Complete
+# Task 118
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 359
+INFO: Complete
+# Task 119
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 359
+INFO: Complete
+# Task 120
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 360
+INFO: Complete
+# Task 121
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 359
+INFO: Complete
+# Task 122
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 359
+INFO: Complete
+# Task 123
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 359
+INFO: Complete
+# Task 124
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 359
+INFO: Complete
+# Task 125
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 359
+INFO: Complete
+# Task 126
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 360
+INFO: Complete
+# Task 127
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 359
+INFO: Complete
+# Task 128
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 359
+INFO: Complete
+# Task 129
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 767
+INFO: Complete
+# Task 130
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 5455
+INFO: Complete
+# Task 131
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 5455
+INFO: Complete
+# Task 132
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 5455
+INFO: Complete
+# Task 133
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 5456
+INFO: Complete
+# Task 134
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 5455
+INFO: Complete
+# Task 135
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 5455
+INFO: Complete
+# Task 136
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 5456
+INFO: Complete
+# Task 137
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 5455
+INFO: Complete
+# Task 138
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 5455
+INFO: Complete
+# Task 139
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 5455
+INFO: Complete
+# Task 140
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 5456
+INFO: Complete
+# Task 141
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 5456
+INFO: Complete
+# Task 142
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 46
+INFO: Complete
+# Task 143
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 46
+INFO: Complete
+# Task 144
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 46
+INFO: Complete
+# Task 145
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 46
+INFO: Complete
+# Task 146
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 4600
+INFO: Complete
+# Task 147
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 150
+INFO: Complete
+# Task 148
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 151
+INFO: Complete
+# Task 149
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 150
+INFO: Complete
+# Task 150
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 957
+INFO: Complete
+# Task 151
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 957
+INFO: Complete
+# Task 152
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 748
+INFO: Complete
+# Task 153
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 199
+INFO: Complete
+# Task 154
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 199
+INFO: Complete
+# Task 155
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 199
+INFO: Complete
+# Task 156
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 199
+INFO: Complete
+# Task 157
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 199
+INFO: Complete
+# Task 158
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 568
+INFO: Complete
+# Task 159
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 177
+INFO: Complete
+# Task 160
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 177
+INFO: Complete
+# Task 161
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 177
+INFO: Complete
+# Task 162
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 197
+INFO: Complete
+# Task 163
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 164
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 165
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 166
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 167
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 168
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 169
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 170
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 171
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 172
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 173
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 174
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 175
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 176
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 177
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 178
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 179
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 180
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 181
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 1483
+INFO: Complete
+# Task 182
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 100
+INFO: Complete
+# Task 183
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 100
+INFO: Complete
+# Task 184
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 100
+INFO: Complete
+# Task 185
+INFO: Start
+INFO: Space initialized
+INFO: Cluster initialized
+INFO: Number of the clusters: 100
+INFO: Complete
