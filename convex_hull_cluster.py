@@ -98,7 +98,7 @@ class GiftWrapping(object):
                 self.queuing_triangle(triangle, Queue)
                 processed[edge] = True
 
-    def clustering():
+    def clustering(self):
         """
         Description:
             Convex Hull Algorithm - modified
