@@ -3,7 +3,7 @@
 # @Email:  joey.teng.dev@gmail.com
 # @Filename: convex_hull_cluster.py
 # @Last modified by:   Toujour
-# @Last modified time: 22-Jan-2018
+# @Last modified time: 24-Jan-2018
 """
 Input argument list:
     dataset_filename
@@ -27,6 +27,7 @@ Predefined types:
 
 import json
 import logging
+import logging.handlers
 import queue
 import sys
 
@@ -134,14 +135,19 @@ def squared_area(vertices):
     return logvolume
 
 
-def check_inside(edge, face, area, pivot):
+def check_inside(face=None, pivot=None, edge=None, area=None):
     """
     Description
     Parameters:
-        edge:
         face:
         pivot:
             <type>: Vertex
+        edge:
+            Default:
+                face[:-1]
+        area:
+            Default:
+                squared_area(face)
     Returns:
         inside:
             <type>: bool
@@ -150,6 +156,11 @@ def check_inside(edge, face, area, pivot):
         area:
             new squared_area calculated using _face
     """
+    if face is None or pivot is None:
+        raise ValueError("Wrong parameters given")
+    edge = edge or face[:-1]
+    area = area or squared_area(face)
+
     sign, logvolume = signed_volume(form_face(face, pivot))
     _face = form_face(edge, pivot)
     _area = squared_area(_face)
@@ -161,19 +172,21 @@ def check_inside(edge, face, area, pivot):
 
 def check_inside_hull(hull, pivot):
     """
-    Description
-    Parameters
+    Description:
+    Parameters:
     Returns:
         inside:
             <type>: bool
     """
-    # TODO:
-    return None
+    for face in hull:
+        if not check_inside(face=face, pivot=pivot):
+            return False
+    return True
 
 
 def pivot_on_edge(dataset, edge, label):
     """
-    Description
+    Description:
     Parameters:
         dataset:
             <type>: Dataset
@@ -192,47 +205,44 @@ def pivot_on_edge(dataset, edge, label):
     while index < length and dataset[index]['label'] != label:
         index += 1
 
-    pivot = dataset[index]['coordinate']
-    face = form_face(edge, pivot)
-    area = squared_area(face)
+    homo = {}
+    homo['pivot'] = dataset[index]['coordinate']
+    homo['face'] = form_face(edge, homo['pivot'])
+    homo['area'] = squared_area(homo['face'])
 
     while index < length and dataset[index]['label'] == label:
         index += 1
 
-    opp_pivot = dataset[index]['coordinate']
-    opp_face = form_face(edge, opp_pivot)
-    opp_area = squared_area(opp_face)
+    opp = {}
+    opp['pivot'] = dataset[index]['coordinate']
+    opp['face'] = form_face(edge, opp['pivot'])
+    opp['area'] = squared_area(opp['face'])
 
     found = False
-    check = yield [pivot, label, None]
+    check = yield [homo['pivot'], label, None]
     if check == 'homogeneous':  # not 'hetrogeneous'
         found = True
 
     for point in dataset:
-        _pivot = point['coordinate']
+        current = {}
+        current['pivot'] = point['coordinate']
+        updated, current['face'], current['area'] = check_inside(
+            face=homo['face'], pivot=current['pivot'],
+            edge=edge, area=homo['area'])
         if point['label'] == label:
-            updated, _face, _area = check_inside(
-                edge, face, area, _pivot)
-        else:
-            updated, _face, _area = check_inside(
-                edge, opp_face, opp_area, _pivot)
-            updated = not updated
+            updated = not updated  # update only when new pivot is outer
 
         if updated:
-            check = yield [_pivot, label, None]
+            check = yield [current['pivot'], label, None]
             if check == 'homogeneous':  # not 'hetrogeneous'
                 # update
-                pivot = _pivot
-                face = _face
-                area = _area
+                homo = current
                 found = True
             elif check == 'opposite inside':  # not 'opposite outside'
                 # update pivots with opposite label
-                opp_pivot = _pivot
-                opp_face = _face
-                opp_area = _area
+                opp = current
 
-    yield (pivot, found)
+    yield (homo['pivot'], found)
     return
 
 
@@ -314,43 +324,71 @@ def initialize_hull(dataset):
     Parameters:
         dataset:
             <type>: Vertices
+    Returns:
+        label:
+        edge
     """
     dimension = len(dataset[0]['coordinate'])
     label, edge = qsort_partition(dataset, target=dimension - 1)
     return (label, tuple(edge))
 
 
-def queuing_face(face, queue):
+def queuing_face(face, _queue):
     """
     Description
     Parameters:
         face:
             <type>: Vertices
-        queue:
+        _queue:
     """
     for i in range(len(face)):
         sub_face = []
         for j, element in enumerate(face):
             if i != j:
                 sub_face.append(element)
-        queue.put(tuple(sub_face))
+        _queue.put(tuple(sub_face))
 
 
-def check_homogeneity(dataset, hull, edge, pivot):
+def check_homogeneity(dataset, hull, label, used_pivots):
     """
-    Description
-    Parameters
+    Description:
+    Parameters:
+        dataset:
+        hull:
+        label:
+        used_pivots:
+            <type>: dict
+                {Vertex: True}
     Returns:
         homogeneity:
             <type>: bool
     """
-    # TODO:
-    return None
+    for point in dataset:
+        pivot = point['coordinate']
+        _label = point['label']
+        if pivot in used_pivots or _label == label:
+            continue
+        if check_inside_hull(hull, pivot):
+            return False
+
+    return True
 
 
 def gift_wrapping(dataset):
     """
-    Description
+    Description:
+    Parameters:
+        dataset:
+    Returns:
+        <type>: dict
+            {
+                "faces": all the faces,
+                    <type>: list
+                    [face]
+                "vertices": all the vertices
+                    <type>: dict
+                    {Vertex: True}
+            }
     Reference: https://www.cs.jhu.edu/~misha/Spring16/09.pdf
     """
     label, face = initialize_hull(dataset)
@@ -362,6 +400,7 @@ def gift_wrapping(dataset):
     hull = []
     hull.append(face)
     vertices = [coordinate for coordinate in face]
+    used_pivots = dict(zip(face, [True] * len(face)))
     edge = None
     while _queue.not_empty:
         last_edge = edge
@@ -370,9 +409,13 @@ def gift_wrapping(dataset):
             find_pivot = pivot_on_edge(dataset, edge, label)
             pivot = next(find_pivot)
             while len(pivot) == 3:
+                # Find next pivot
+                # Feedback: if the pivot suggested is a valid choice
                 if label == pivot[1]:
+                    hull.append(form_face(edge, pivot[0]))
                     homogeneity = check_homogeneity(
-                        dataset, hull, edge, pivot[0])
+                        dataset, hull, label, used_pivots)
+                    hull.pop()
                     if homogeneity:
                         pivot = find_pivot.send('homogeneous')
                     else:
@@ -393,11 +436,30 @@ def gift_wrapping(dataset):
 
             face = form_face(edge, pivot)
             vertices.append(pivot)
+            used_pivots[pivot] = True
             hull.append(face)
             queuing_face(face, _queue)
-            if processed[edge]:
-                break
             processed[edge] = True
+
+    return {
+        "faces": hull,
+        "vertices": used_pivots}
+
+
+def calculate_volume(hull):
+    """
+    Description:
+    Parameter:
+        hull:
+    Return:
+    """
+    origin = hull[0][0]
+    volume = 0.0
+    for face in hull:
+        logvolume = signed_volume(form_face(face, origin))[1]
+        volume += numpy.e ** logvolume
+
+    return volume
 
 
 def clustering(dataset):
@@ -415,29 +477,58 @@ def clustering(dataset):
     Returns:
         clusters:
             list of dict objects:
-            [{'vertices': [Point, ...],
-              'points': [Point, ...](vertices are excluded)
-              'size': int= len(['vertices']) + len(['points']),
+            [{'vertices': [Vertex, ...],
+              'points': [Vertex, ...](vertices are excluded)
+              'size':
+                    <type>: int
+                    len(['vertices']) + len(['points']),
               'volume': float(optional)}, ...]
     """
-    # TODO:
-    return None
+    clusters = []
+    while dataset:
+        # List is not empty
+        cluster = gift_wrapping(dataset)
+
+        hull = cluster['faces']
+        used_vertices = cluster['vertices']
+        _dataset = []
+        vertices = []
+        points = []
+        for point in dataset:
+            vertex = point['coordinate']
+            if vertex in used_vertices:
+                vertices.append(vertex)
+            else:
+                _dataset.append(point)
+                if check_inside_hull(hull, vertex):
+                    points.append(vertex)
+        volume = calculate_volume(hull)
+
+        dataset = _dataset
+        clusters.append({'vertices': vertices,
+                         'points': points,
+                         'size': len(vertices) + len(points),
+                         'volume': volume})
+
+    return clusters
 
 
 def size_versus_number_of_clusters(clusters):
     """
     Description
     """
-    # TODO:
-    return None
+    # TODO: size versus number of clusters
+    # return None
+    return clusters[0]['size']
 
 
 def volume_versus_size(clusters):
     """
     Description
     """
-    # TODO:
-    return None
+    # TODO: volume versus size
+    # return None
+    return clusters[0]['volume']
 
 
 def main(argv):
@@ -445,7 +536,7 @@ def main(argv):
     main
     """
     dataset_filename, clusters_filename, output_filename, log_file = tuple(
-        argv + [None])
+        argv)
 
     logger = initialize_logger(log_file)
     logger.info('Start')
