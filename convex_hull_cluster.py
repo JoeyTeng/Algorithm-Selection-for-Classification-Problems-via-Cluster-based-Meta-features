@@ -33,124 +33,6 @@ import sys
 import numpy
 
 
-class GiftWrapping(object):
-    """
-    Description:
-        Convex Hull Algorithm - modified
-        Base on Gift Wrapping
-        All hulls will be pure (only contains data points with same label)
-    """
-    # TODO: Complete & Expend to n-D
-
-    def __init__(self, dataset, dimension=2):
-        """
-        Argument:
-            dataset:
-                list of dict objects:
-                [Point, ...]
-            dimension:
-                An integer to specify the dimension of the dataset
-                Default Value: 2
-        """
-        self.dataset = dataset
-        self.dimension = dimension
-        self.clusters = []
-
-    def pivot_on_edge(self, edge):
-        # TODO:
-        pass
-
-    @staticmethod
-    def form_triangle(edge, pivot):
-        # TODO:
-        pass
-
-    def find_edge_on_hull(self):
-        pass
-
-    def find_triangle_on_hull(self):
-        edge = self.find_edge_on_hull()
-        pivot = self.pivot_on_edge(edge,)
-        return [*edge, pivot]
-
-    @staticmethod
-    def queuing_triangle(triangle, Queue):
-        Queue.put((triangle[0], triangle[1], ))
-        Queue.put((triangle[1], triangle[2], ))
-        Queue.put((triangle[2], triangle[0], ))
-
-    def gift_wrapping(self):
-        # Reference: https://www.cs.jhu.edu/~misha/Spring16/09.pdf
-        triangle = self.find_triangle_on_hull()
-        Queue = queue.Queue()
-        self.queuing_triangle(triangle, Queue)
-
-        processed = {}
-
-        hull = []
-        hull.append(triangle)
-        while (Queue.not_empty):
-            edge = Queue.get()
-            if (not processed.get(edge, d=False)):
-                pivot = self.pivot_on_edge(edge)
-                triangle = self.__class__.form_triangle(edge, pivot)
-                hull.append(triangle)
-                self.queuing_triangle(triangle, Queue)
-                processed[edge] = True
-
-    def clustering(self):
-        """
-        Description:
-            Convex Hull Algorithm - modified
-
-        return:
-            clusters:
-                list of dict objects:
-                [{'vertices': [Point, ...],
-                  'points': [Point, ...] (vertices are excluded)
-                  'size': int = len(['vertices']) + len(['points']),
-                  'volume': float (optional)}, ...]
-        """
-        # TODO:
-        return None
-
-    @property
-    def size(self):
-        """
-        return:
-            Number of Clusters
-                int
-        """
-        return len(self.clusters)
-
-    @property
-    def size_versus_number_of_clusters(self):
-        """
-        Description
-        """
-        # TODO:
-        return None
-
-    @property
-    def volume_versus_size(self):
-        """
-        Description
-        """
-        # TODO:
-        return None
-
-    @property
-    def features(self):
-        """
-        return:
-        """
-        return {
-            'Number of Clusters': self.size,
-            'Size versus Number of Clusters':
-                self.size_versus_number_of_clusters,
-            'Volume versus Size': self.volume_versus_size}
-
-
 def initialize_logger(filename=None, level=logging.INFO, filemode='w'):
     """
     Initialize a logger in module logging
@@ -574,16 +456,18 @@ def main(argv):
     dataset = load_dataset(dataset_filename)
     logger.info('Dataset loaded')
 
-    clustering = GiftWrapping(dataset, dimension=len(dataset[0]['coordinate']))
     logger.debug('Clustering data points')
-    clusters = clustering.clustering()
+    clusters = clustering(dataset)
     logger.debug(
         'Dumping clusters data into json file: %s', clusters_filename)
     json.dump(clusters, open(clusters_filename, 'w'))
     logger.info('Data points clustered')
 
     logger.debug('Calculating meta-feature indicators')
-    features = clustering.features
+    features = {'Number of Clusters': len(clusters),
+                'Size versus Number of Clusters':
+                size_versus_number_of_clusters(clusters),
+                'Volume versus Size': volume_versus_size(clusters)}
     logger.debug(
         'Dumping meta-feature indicators into json file: %s',
         clusters_filename)
