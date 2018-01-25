@@ -246,6 +246,40 @@ def pivot_on_edge(dataset, edge, label):
     return
 
 
+def find_next_pivot(dataset, hull, edge, label, used_pivots):
+    """
+    Description:
+    Parameters:
+    Returns:
+        pivot:
+            Vertex
+        found:
+            bool
+    """
+    find_pivot = pivot_on_edge(dataset, edge, label)
+    pivot = next(find_pivot)
+    while len(pivot) == 3:
+        # Find next pivot
+        # Feedback: if the pivot suggested is a valid choice
+        if label == pivot[1]:
+            hull.append(form_face(edge, pivot[0]))
+            homogeneity = check_homogeneity(
+                dataset, hull, label, used_pivots)
+            hull.pop()
+            if homogeneity:
+                pivot = find_pivot.send('homogeneous')
+            else:
+                pivot = find_pivot.send('hetrogeneous')
+        else:
+            inside = check_inside_hull(hull, pivot[0])
+            if inside:
+                pivot = find_pivot.send('opposite inside')
+            else:
+                pivot = find_pivot.send('opposite outside')
+
+    return pivot
+
+
 def form_face(edge, pivot):
     """
     Description
@@ -289,15 +323,19 @@ def qsort_partition(data, target=1, lhs=0, rhs=None):
     rhs = (rhs or len(data)) - 1
     # comp is Partially supported: only used in partitioning
     # but not in sorting return values
-    comp = (lambda x, y: x < y)
+    # BUG: Work around instead for now
+    # comp = (lambda x, y: x < y)
 
     _data = []
     label = data[0]['label']
-    for element in data[lhs:rhs]:
+    for element in data[lhs:rhs + 1]:
         if element['label'] == label:
             _data.append(element['coordinate'])
     data = _data
 
+    # BUG: Work around instead for now
+    """
+    rhs = len(data) - 1  # Since [data] is updated
     position = -1
 
     while position != target:
@@ -308,14 +346,15 @@ def qsort_partition(data, target=1, lhs=0, rhs=None):
 
         pivot = data[rhs]
         index = lhs
-        for i in range(lhs, rhs):
+        for i in range(lhs, rhs + 1):
             if comp(data[i], pivot):
                 data[i], data[index] = data[index], data[i]
                 index += 1
-        data[pivot], data[index] = data[index], data[pivot]
+        data[rhs], data[index] = data[index], data[rhs]
         position = index  # Return value
-
-    return (label, data[:position].sort())
+    return (label, sorted(data[:target]))
+    """
+    return (label, sorted(data)[:target])
 
 
 def initialize_hull(dataset):
@@ -326,11 +365,21 @@ def initialize_hull(dataset):
             <type>: Vertices
     Returns:
         label:
-        edge
+        dimension:
+            int
+        face:
+        used_pivots:
     """
     dimension = len(dataset[0]['coordinate'])
     label, edge = qsort_partition(dataset, target=dimension - 1)
-    return (label, tuple(edge))
+    used_pivots = dict(zip(edge, [True] * len(edge)))
+    face = edge
+    if len(edge) == dimension - 1:
+        pivot, found = find_next_pivot(
+            dataset, [], edge, label, used_pivots)
+        if found:
+            face = form_face(edge, pivot)
+    return (label, dimension, tuple(face), used_pivots)
 
 
 def queuing_face(face, _queue):
@@ -388,46 +437,29 @@ def gift_wrapping(dataset):
                 "vertices": all the vertices
                     <type>: dict
                     {Vertex: True}
+                "dimension":
+                    <type>: int
+                    len(face)
             }
     Reference: https://www.cs.jhu.edu/~misha/Spring16/09.pdf
     """
-    label, face = initialize_hull(dataset)
+    label, dimension, face, used_pivots = initialize_hull(dataset)
     _queue = queue.Queue()
-    queuing_face(face, _queue)
+    if len(face) == dimension:
+        queuing_face(face, _queue)
 
     processed = {}
 
     hull = []
     hull.append(face)
     vertices = [coordinate for coordinate in face]
-    used_pivots = dict(zip(face, [True] * len(face)))
     edge = None
-    while _queue.not_empty:
+    while not _queue.empty():
         last_edge = edge
         edge = _queue.get()
-        if not processed.get(edge, d=False):
-            find_pivot = pivot_on_edge(dataset, edge, label)
-            pivot = next(find_pivot)
-            while len(pivot) == 3:
-                # Find next pivot
-                # Feedback: if the pivot suggested is a valid choice
-                if label == pivot[1]:
-                    hull.append(form_face(edge, pivot[0]))
-                    homogeneity = check_homogeneity(
-                        dataset, hull, label, used_pivots)
-                    hull.pop()
-                    if homogeneity:
-                        pivot = find_pivot.send('homogeneous')
-                    else:
-                        pivot = find_pivot.send('hetrogeneous')
-                else:
-                    inside = check_inside_hull(hull, pivot[0])
-                    if inside:
-                        pivot = find_pivot.send('opposite inside')
-                    else:
-                        pivot = find_pivot.send('opposite outside')
-
-            pivot, found = pivot
+        if not processed.get(edge, False):
+            pivot, found = find_next_pivot(
+                dataset, hull, edge, label, used_pivots)
             if not found:
                 pivot = vertices[0]
                 edge = last_edge
@@ -443,7 +475,8 @@ def gift_wrapping(dataset):
 
     return {
         "faces": hull,
-        "vertices": used_pivots}
+        "vertices": used_pivots,
+        "dimension": dimension}
 
 
 def calculate_volume(hull):
@@ -491,6 +524,8 @@ def clustering(dataset):
 
         hull = cluster['faces']
         used_vertices = cluster['vertices']
+        dimension = cluster['dimension']
+        found = dimension < len(used_vertices)
         _dataset = []
         vertices = []
         points = []
@@ -500,9 +535,12 @@ def clustering(dataset):
                 vertices.append(vertex)
             else:
                 _dataset.append(point)
-                if check_inside_hull(hull, vertex):
+                if found and check_inside_hull(hull, vertex):
                     points.append(vertex)
-        volume = calculate_volume(hull)
+        if found:
+            volume = calculate_volume(hull)
+        else:
+            volume = 0
 
         dataset = _dataset
         clusters.append({'vertices': vertices,
