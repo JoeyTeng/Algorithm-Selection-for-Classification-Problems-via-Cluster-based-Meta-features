@@ -597,12 +597,22 @@ def main(argv):
     dataset = load_dataset(dataset_filename)
     logger.info('Dataset loaded')
 
-    logger.debug('Clustering data points')
-    clusters = clustering(dataset)
-    logger.debug(
-        'Dumping clusters data into json file: %s', clusters_filename)
-    json.dump(clusters, open(clusters_filename, 'w'))
-    logger.info('Data points clustered')
+    logger.info('Trying to load clusters from %s', clusters_filename)
+    clusters = None
+    try:
+        clusters = json.load(open(clusters_filename, 'r'))
+    except FileNotFoundError:
+        logger.warning('Clusters data file not found')
+    except json.decoder.JSONDecodeError:
+        logger.warning('File broken. Not Json Decodable')
+
+    if not clusters:
+        logger.debug('Clustering data points')
+        clusters = clustering(dataset)
+        logger.debug(
+            'Dumping clusters data into json file: %s', clusters_filename)
+        json.dump(clusters, open(clusters_filename, 'w'))
+        logger.info('Data points clustered')
 
     logger.debug('Calculating meta-feature indicators')
     features = {'Number of Clusters': len(clusters),
