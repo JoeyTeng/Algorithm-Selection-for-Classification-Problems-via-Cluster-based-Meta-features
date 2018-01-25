@@ -66,10 +66,13 @@ def load_dataset(filename):
         dataset:
             <type>: Dataset
     """
-    return [(lambda point: {
-        'coordinate': tuple(map(float, point[:-1])),
-        'label': int(point[-1])})(string.split(','))
-        for string in open(filename, 'r').read().split('\n')]
+    return [(
+        lambda point: {
+            'coordinate': tuple(map(float, point[:-1])),
+            'label': int(point[-1])})
+            (string.strip().rstrip().split(','))
+            for string in open(filename, 'r').read()
+            .strip().rstrip().split('\n')]
 
 
 def signed_volume(vertices):
@@ -213,34 +216,29 @@ def pivot_on_edge(dataset, edge, label):
     while index < length and dataset[index]['label'] == label:
         index += 1
 
-    opp = {}
-    opp['pivot'] = dataset[index]['coordinate']
-    opp['face'] = form_face(edge, opp['pivot'])
-    opp['area'] = squared_area(opp['face'])
-
     found = False
     check = yield [homo['pivot'], label, None]
-    if check == 'homogeneous':  # not 'hetrogeneous'
+    if check:
         found = True
 
     for point in dataset:
+        if point['label'] != label:
+            # Skip all instances labelled differently
+            # Homogeneity test is checked every round
+            continue
+
         current = {}
         current['pivot'] = point['coordinate']
         updated, current['face'], current['area'] = check_inside(
             face=homo['face'], pivot=current['pivot'],
             edge=edge, area=homo['area'])
-        if point['label'] == label:
-            updated = not updated  # update only when new pivot is outer
 
         if updated:
             check = yield [current['pivot'], label, None]
-            if check == 'homogeneous':  # not 'hetrogeneous'
+            if check:
                 # update
                 homo = current
                 found = True
-            elif check == 'opposite inside':  # not 'opposite outside'
-                # update pivots with opposite label
-                opp = current
 
     yield (homo['pivot'], found)
     return
@@ -261,21 +259,14 @@ def find_next_pivot(dataset, hull, edge, label, used_pivots):
     while len(pivot) == 3:
         # Find next pivot
         # Feedback: if the pivot suggested is a valid choice
-        if label == pivot[1]:
-            hull.append(form_face(edge, pivot[0]))
-            homogeneity = check_homogeneity(
-                dataset, hull, label, used_pivots)
-            hull.pop()
-            if homogeneity:
-                pivot = find_pivot.send('homogeneous')
-            else:
-                pivot = find_pivot.send('hetrogeneous')
+        hull.append(form_face(edge, pivot[0]))
+        homogeneity = check_homogeneity(
+            dataset, hull, label, used_pivots)
+        hull.pop()
+        if homogeneity:
+            pivot = find_pivot.send(True)
         else:
-            inside = check_inside_hull(hull, pivot[0])
-            if inside:
-                pivot = find_pivot.send('opposite inside')
-            else:
-                pivot = find_pivot.send('opposite outside')
+            pivot = find_pivot.send(False)
 
     return pivot
 
@@ -553,20 +544,41 @@ def clustering(dataset):
 
 def size_versus_number_of_clusters(clusters):
     """
-    Description
+    Description:
+    Parameter:
+        clusters
+    Return:
+        <type>: dict
+            {
+                size: quantity
+                    int: int
+            }
     """
-    # TODO: size versus number of clusters
-    # return None
-    return clusters[0]['size']
+    stats = {}
+    for cluster in clusters:
+        # initial quantity is 0
+        stats[cluster['size']] = stats.get(cluster['size'], 0) + 1
+    return stats
 
 
 def volume_versus_size(clusters):
     """
-    Description
+    Description:
+    Parameter:
+        clusters
+    Return:
+        <type>: dict
+            {
+                size: volume
+                    int: [float]
+            }
     """
-    # TODO: volume versus size
-    # return None
-    return clusters[0]['volume']
+    stats = {}
+    for cluster in clusters:
+        # initial container is empty
+        stats[cluster['size']] = stats.get(
+            cluster['size'], []) + [cluster['volume']]
+    return stats
 
 
 def main(argv):
