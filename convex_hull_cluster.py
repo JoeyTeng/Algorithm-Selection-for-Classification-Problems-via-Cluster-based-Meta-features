@@ -244,7 +244,7 @@ def pivot_on_edge(dataset, edge, label):
     return
 
 
-def find_next_pivot(dataset, hull, edge, label, used_pivots):
+def find_next_pivot(dataset, hull, edge, label, used_pivots, all_instances):
     """
     Description:
     Parameters:
@@ -261,7 +261,7 @@ def find_next_pivot(dataset, hull, edge, label, used_pivots):
         # Feedback: if the pivot suggested is a valid choice
         hull.append(form_face(edge, pivot[0]))
         homogeneity = check_homogeneity(
-            dataset, hull, label, used_pivots)
+            all_instances, hull, label, used_pivots)
         hull.pop()
         if homogeneity:
             pivot = find_pivot.send(True)
@@ -281,6 +281,9 @@ def form_face(edge, pivot):
             <type>: Point['coordinate']
     """
     return tuple(list(edge) + [pivot])
+
+
+sort_vertices = sorted
 
 
 def qsort_partition(data, target=1, lhs=0, rhs=None):
@@ -308,7 +311,7 @@ def qsort_partition(data, target=1, lhs=0, rhs=None):
             default=__builtin__.__lt__
 
     Returns:
-        list which contains [target] shallow copies of elements['coordinate']
+        list which contains [target] shallow copies of Vertex
     """
     lhs = lhs or 0
     rhs = (rhs or len(data)) - 1
@@ -343,12 +346,12 @@ def qsort_partition(data, target=1, lhs=0, rhs=None):
                 index += 1
         data[rhs], data[index] = data[index], data[rhs]
         position = index  # Return value
-    return (label, sorted(data[:target]))
+    return (label, sort_vertices(data[:target]))
     """
-    return (label, sorted(data)[:target])
+    return (label, sort_vertices(data)[:target])
 
 
-def initialize_hull(dataset):
+def initialize_hull(dataset, all_instances):
     """
     Description
     Parameters:
@@ -359,6 +362,7 @@ def initialize_hull(dataset):
         dimension:
             int
         face:
+            (Vertex, ...)
         used_pivots:
     """
     dimension = len(dataset[0]['coordinate'])
@@ -367,7 +371,7 @@ def initialize_hull(dataset):
     face = edge
     if len(edge) == dimension - 1:
         pivot, found = find_next_pivot(
-            dataset, [], edge, label, used_pivots)
+            dataset, [], edge, label, used_pivots, all_instances)
         if found:
             face = form_face(edge, pivot)
     return (label, dimension, tuple(face), used_pivots)
@@ -386,14 +390,14 @@ def queuing_face(face, _queue):
         for j, element in enumerate(face):
             if i != j:
                 sub_face.append(element)
-        _queue.put(tuple(sub_face))
+        _queue.put(tuple(sort_vertices(sub_face)))
 
 
-def check_homogeneity(dataset, hull, label, used_pivots):
+def check_homogeneity(all_instances, hull, label, used_pivots):
     """
     Description:
     Parameters:
-        dataset:
+        all_instances:
         hull:
         label:
         used_pivots:
@@ -403,7 +407,7 @@ def check_homogeneity(dataset, hull, label, used_pivots):
         homogeneity:
             <type>: bool
     """
-    for point in dataset:
+    for point in all_instances:
         pivot = point['coordinate']
         _label = point['label']
         if pivot in used_pivots or _label == label:
@@ -414,7 +418,7 @@ def check_homogeneity(dataset, hull, label, used_pivots):
     return True
 
 
-def gift_wrapping(dataset):
+def gift_wrapping(dataset, all_instances):
     """
     Description:
     Parameters:
@@ -431,10 +435,14 @@ def gift_wrapping(dataset):
                 "dimension":
                     <type>: int
                     len(face)
+                "label":
+                    <type>: int
+                    label
             }
     Reference: https://www.cs.jhu.edu/~misha/Spring16/09.pdf
     """
-    label, dimension, face, used_pivots = initialize_hull(dataset)
+    label, dimension, face, used_pivots = initialize_hull(
+        dataset, all_instances)
     _queue = queue.Queue()
     if len(face) == dimension:
         queuing_face(face, _queue)
@@ -450,7 +458,7 @@ def gift_wrapping(dataset):
         edge = _queue.get()
         if not processed.get(edge, False):
             pivot, found = find_next_pivot(
-                dataset, hull, edge, label, used_pivots)
+                dataset, hull, edge, label, used_pivots, all_instances)
             if not found:
                 pivot = vertices[0]
                 edge = last_edge
@@ -467,7 +475,8 @@ def gift_wrapping(dataset):
     return {
         "faces": hull,
         "vertices": used_pivots,
-        "dimension": dimension}
+        "dimension": dimension,
+        "label": label}
 
 
 def calculate_volume(hull):
@@ -509,9 +518,10 @@ def clustering(dataset):
               'volume': float(optional)}, ...]
     """
     clusters = []
+    all_instances = dataset
     while dataset:
         # List is not empty
-        cluster = gift_wrapping(dataset)
+        cluster = gift_wrapping(dataset, all_instances)
 
         hull = cluster['faces']
         used_vertices = cluster['vertices']
@@ -585,8 +595,10 @@ def main(argv):
     """
     main
     """
-    dataset_filename, clusters_filename, output_filename, log_file = tuple(
-        argv)
+    dataset_filename = argv[0]
+    clusters_filename = dataset_filename + ".clusters.json"
+    output_filename = dataset_filename + ".output.json"
+    log_file = dataset_filename + ".log"
 
     logger = initialize_logger(log_file)
     logger.info('Start')
