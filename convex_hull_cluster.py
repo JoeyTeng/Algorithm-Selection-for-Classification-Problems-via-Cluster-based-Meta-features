@@ -187,7 +187,7 @@ def check_inside_hull(hull, pivot):
     return True
 
 
-def pivot_on_edge(dataset, edge, label):
+def pivot_on_edge(dataset, edge, label, used_pivots):
     """
     Description:
     Parameters:
@@ -205,7 +205,9 @@ def pivot_on_edge(dataset, edge, label):
     """
     index = 0
     length = len(dataset)
-    while index < length and dataset[index]['label'] != label:
+    while index < length - 1 and \
+            (dataset[index]['label'] != label or
+             dataset[index]['coordinate'] in used_pivots):
         index += 1
 
     homo = {}
@@ -213,15 +215,12 @@ def pivot_on_edge(dataset, edge, label):
     homo['face'] = form_face(edge, homo['pivot'])
     homo['area'] = squared_area(homo['face'])
 
-    while index < length and dataset[index]['label'] == label:
-        index += 1
-
     found = False
     check = yield [homo['pivot'], label, None]
     if check:
         found = True
 
-    for point in dataset:
+    for point in dataset[index + 1:]:
         if point['label'] != label:
             # Skip all instances labelled differently
             # Homogeneity test is checked every round
@@ -229,11 +228,11 @@ def pivot_on_edge(dataset, edge, label):
 
         current = {}
         current['pivot'] = point['coordinate']
-        updated, current['face'], current['area'] = check_inside(
+        inside, current['face'], current['area'] = check_inside(
             face=homo['face'], pivot=current['pivot'],
             edge=edge, area=homo['area'])
 
-        if updated:
+        if not inside:
             check = yield [current['pivot'], label, None]
             if check:
                 # update
@@ -254,7 +253,7 @@ def find_next_pivot(dataset, hull, edge, label, used_pivots, all_instances):
         found:
             bool
     """
-    find_pivot = pivot_on_edge(dataset, edge, label)
+    find_pivot = pivot_on_edge(dataset, edge, label, used_pivots)
     pivot = next(find_pivot)
     while len(pivot) == 3:
         # Find next pivot
@@ -374,6 +373,7 @@ def initialize_hull(dataset, all_instances):
             dataset, [], edge, label, used_pivots, all_instances)
         if found:
             face = form_face(edge, pivot)
+            used_pivots[pivot] = True
     return (label, dimension, tuple(face), used_pivots)
 
 
@@ -390,7 +390,7 @@ def queuing_face(face, _queue):
         for j, element in enumerate(face):
             if i != j:
                 sub_face.append(element)
-        _queue.put(tuple(sort_vertices(sub_face)))
+        _queue.put(tuple(sub_face))
 
 
 def check_homogeneity(all_instances, hull, label, used_pivots):
@@ -447,7 +447,7 @@ def gift_wrapping(dataset, all_instances):
     if len(face) == dimension:
         queuing_face(face, _queue)
 
-    processed = {}
+    processed = {tuple(sort_vertices(face[:-1])): True}
 
     hull = []
     hull.append(face)
@@ -456,7 +456,7 @@ def gift_wrapping(dataset, all_instances):
     while not _queue.empty():
         last_edge = edge
         edge = _queue.get()
-        if not processed.get(edge, False):
+        if not processed.get(tuple(sort_vertices(edge)), False):
             pivot, found = find_next_pivot(
                 dataset, hull, edge, label, used_pivots, all_instances)
             if not found:
@@ -470,7 +470,7 @@ def gift_wrapping(dataset, all_instances):
             used_pivots[pivot] = True
             hull.append(face)
             queuing_face(face, _queue)
-            processed[edge] = True
+            processed[tuple(sort_vertices(edge))] = True
 
     return {
         "faces": hull,
@@ -495,7 +495,7 @@ def calculate_volume(hull):
     return volume
 
 
-def clustering(dataset):
+def clustering(dataset, logger):
     """
     Description:
         Convex Hull Algorithm - modified
@@ -506,6 +506,7 @@ def clustering(dataset):
         dataset:
             list of dict objects:
             [Point, ...]
+        logger:
 
     Returns:
         clusters:
@@ -548,6 +549,11 @@ def clustering(dataset):
                          'points': points,
                          'size': len(vertices) + len(points),
                          'volume': volume})
+        if len(clusters) % 100 == 0:
+            logger.info(
+                'Clustering: %d clusters found, %d/%d instance processed',
+                len(clusters), len(all_instances) - len(dataset),
+                len(all_instances))
 
     return clusters
 
@@ -620,7 +626,7 @@ def main(argv):
 
     if not clusters:
         logger.debug('Clustering data points')
-        clusters = clustering(dataset)
+        clusters = clustering(dataset, logger)
         logger.debug(
             'Dumping clusters data into json file: %s', clusters_filename)
         json.dump(clusters, open(clusters_filename, 'w'))
