@@ -134,7 +134,7 @@ def squared_area(vertices):
     """
     reference = numpy.array(vertices[0])
     matrix = numpy.matrix([numpy.array(x) - reference for x in vertices[1:]])
-    logvolume = numpy.linalg.slogdet(matrix.T * matrix)[1]  # sign, logvolume
+    logvolume = numpy.linalg.slogdet(matrix * matrix.T)[1]  # sign, logvolume
     return logvolume
 
 
@@ -167,7 +167,7 @@ def check_inside(face=None, pivot=None, edge=None, area=None):
     sign, logvolume = signed_volume(form_face(face, pivot))
     _face = form_face(edge, pivot)
     _area = squared_area(_face)
-    if (numpy.isclose([logvolume], [0]) and _area > area) or sign < 0:
+    if (numpy.isclose([numpy.e**logvolume], [0]) and _area > area) or sign < 0:
         # outside
         return (False, _face, _area)
     return (True, _face, _area)
@@ -203,6 +203,7 @@ def pivot_on_edge(dataset, edge, label, used_pivots):
     Yields:
     Returns:
     """
+    # BUG: Pass pure testcase; bug under hetrogeneous dataset
     index = 0
     length = len(dataset)
     while index < length - 1 and \
@@ -491,6 +492,7 @@ def calculate_volume(hull):
     for face in hull:
         logvolume = signed_volume(form_face(face, origin))[1]
         volume += numpy.e ** logvolume
+    volume /= 2  # Triangles = det / 2
 
     return volume
 
