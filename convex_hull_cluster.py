@@ -189,6 +189,31 @@ def check_inside_hull(hull, pivot):
     return True
 
 
+def check_homogeneity(all_instances, hull, label, used_pivots):
+    """
+    Description:
+    Parameters:
+        all_instances:
+        hull:
+        label:
+        used_pivots:
+            <type>: dict
+                {Vertex: True}
+    Returns:
+        homogeneity:
+            <type>: bool
+    """
+    for point in all_instances:
+        pivot = point['coordinate']
+        _label = point['label']
+        if pivot in used_pivots or _label == label:
+            continue
+        if check_inside_hull(hull, pivot):
+            return False
+
+    return True
+
+
 def pivot_on_edge(dataset, edge, label, used_pivots):
     """
     Description:
@@ -249,82 +274,6 @@ def pivot_on_edge(dataset, edge, label, used_pivots):
 
     yield (homo['pivot'], found)
     return
-
-
-def close_up(edge_count, used_pivots):
-    """
-    Description:
-    Parameters:
-        edge_count:
-        used_pivots:
-    Returns:
-        face:
-    """
-    edges = []
-    for edge, count in edge_count.items():
-        if count == 1:
-            edges.append(edge)
-
-    faces = []
-    while edges:
-        for i, edge_a in enumerate(edges):
-            for j, edge_b in enumerate(edges):
-                if i != j and len(set(edge_a).difference(set(edge_b))) == 2:
-                    edges[i], edges[j], edges[-1], edges[-2] =\
-                        edges[-1], edges[-2], edges[i], edges[j]
-        vertices = {}
-        for i in (-1, -1):
-            for vertex in edges[i]:
-                vertices[vertex] = True
-            edges.pop()
-
-        face = list(vertices.keys())
-        checked = False
-        for pivot in used_pivots.keys():
-            if pivot not in vertices:
-                checked = True
-                if not check_inside(face=face, pivot=pivot)[0]:
-                    # det(A) = -det (B) if two cols swap (odd and even)
-                    face[-1], face[-2] = face[-2], face[-1]
-                    break
-
-        if not checked:
-            return False
-            # if not check_inside(face=face, pivot=tuple([0] * len(face[0])))
-            # [0]:
-            #     det(A) = -det (B) if two cols swap (odd and even)
-            #     face[0], face[1] = face[1], face[0]
-
-        faces.append(tuple(face))
-
-    return faces
-
-
-def close_up_hull(hull, edge_count, used_pivots):
-    """
-    Description:
-        Second stage
-        add all remaining faces into the hull to form
-            a closed simplicial complex
-    Parameters:
-        hull:
-        edge_count:
-        used_pivots:
-    Return:
-        no_face_added:
-            <type>: int
-            Number of face added
-    """
-    face_added = close_up(edge_count, used_pivots)
-    if not face_added:
-        face = list(hull[0])
-        # det(A) = -det (B) if two cols swap (odd and even)
-        face[-2], face[-1] = face[-1], face[-2]
-        face_added = [tuple(face)]
-    for face in face_added:
-        hull.append(face)
-
-    return len(face_added)
 
 
 def find_next_pivot(dataset, hull, edge, label,
@@ -408,6 +357,82 @@ def form_face(edge, pivot):
             <type>: Point['coordinate']
     """
     return tuple(list(edge) + [pivot])
+
+
+def close_up(edge_count, used_pivots):
+    """
+    Description:
+    Parameters:
+        edge_count:
+        used_pivots:
+    Returns:
+        face:
+    """
+    edges = []
+    for edge, count in edge_count.items():
+        if count == 1:
+            edges.append(edge)
+
+    faces = []
+    while edges:
+        for i, edge_a in enumerate(edges):
+            for j, edge_b in enumerate(edges):
+                if i != j and len(set(edge_a).difference(set(edge_b))) == 2:
+                    edges[i], edges[j], edges[-1], edges[-2] =\
+                        edges[-1], edges[-2], edges[i], edges[j]
+        vertices = {}
+        for i in (-1, -1):
+            for vertex in edges[i]:
+                vertices[vertex] = True
+            edges.pop()
+
+        face = list(vertices.keys())
+        checked = False
+        for pivot in used_pivots.keys():
+            if pivot not in vertices:
+                checked = True
+                if not check_inside(face=face, pivot=pivot)[0]:
+                    # det(A) = -det (B) if two cols swap (odd and even)
+                    face[-1], face[-2] = face[-2], face[-1]
+                    break
+
+        if not checked:
+            return False
+            # if not check_inside(face=face, pivot=tuple([0] * len(face[0])))
+            # [0]:
+            #     det(A) = -det (B) if two cols swap (odd and even)
+            #     face[0], face[1] = face[1], face[0]
+
+        faces.append(tuple(face))
+
+    return faces
+
+
+def close_up_hull(hull, edge_count, used_pivots):
+    """
+    Description:
+        Second stage
+        add all remaining faces into the hull to form
+            a closed simplicial complex
+    Parameters:
+        hull:
+        edge_count:
+        used_pivots:
+    Return:
+        no_face_added:
+            <type>: int
+            Number of face added
+    """
+    face_added = close_up(edge_count, used_pivots)
+    if not face_added:
+        face = list(hull[0])
+        # det(A) = -det (B) if two cols swap (odd and even)
+        face[-2], face[-1] = face[-1], face[-2]
+        face_added = [tuple(face)]
+    for face in face_added:
+        hull.append(face)
+
+    return len(face_added)
 
 
 sort_vertices = sorted
@@ -531,31 +556,6 @@ def queuing_face(face, _queue, edge_count):
         edge_count[sorted_edge] = edge_count.get(sorted_edge, 0) + 1
 
 
-def check_homogeneity(all_instances, hull, label, used_pivots):
-    """
-    Description:
-    Parameters:
-        all_instances:
-        hull:
-        label:
-        used_pivots:
-            <type>: dict
-                {Vertex: True}
-    Returns:
-        homogeneity:
-            <type>: bool
-    """
-    for point in all_instances:
-        pivot = point['coordinate']
-        _label = point['label']
-        if pivot in used_pivots or _label == label:
-            continue
-        if check_inside_hull(hull, pivot):
-            return False
-
-    return True
-
-
 def gift_wrapping(dataset, all_instances):
     """
     Description:
@@ -612,23 +612,6 @@ def gift_wrapping(dataset, all_instances):
         "vertices": used_pivots,
         "dimension": dimension,
         "label": label}
-
-
-def calculate_volume(hull):
-    """
-    Description:
-    Parameter:
-        hull:
-    Return:
-    """
-    origin = hull[0][0]
-    volume = 0.0
-    for face in hull:
-        logvolume = signed_volume(form_face(face, origin))[1]
-        volume += numpy.e ** logvolume
-    volume /= 2  # Triangles = det / 2
-
-    return volume
 
 
 def clustering(dataset, logger):
@@ -692,6 +675,23 @@ def clustering(dataset, logger):
                 len(all_instances))
 
     return clusters
+
+
+def calculate_volume(hull):
+    """
+    Description:
+    Parameter:
+        hull:
+    Return:
+    """
+    origin = hull[0][0]
+    volume = 0.0
+    for face in hull:
+        logvolume = signed_volume(form_face(face, origin))[1]
+        volume += numpy.e ** logvolume
+    volume /= 2  # Triangles = det / 2
+
+    return volume
 
 
 def size_versus_number_of_clusters(clusters):
