@@ -205,7 +205,7 @@ def pivot_on_edge(dataset, edge, label, used_pivots):
     Yields:
     Returns:
     """
-    # BUG: Pass pure testcase; bug under hetrogeneous dataset
+    vertices_in_edge = set(edge)
     index = 0
     length = len(dataset)
     while index < length and \
@@ -228,8 +228,8 @@ def pivot_on_edge(dataset, edge, label, used_pivots):
         found = True
 
     for point in dataset[index + 1:]:
-        if point['label'] != label or point['coordinate'] in used_pivots:
-            # Skip all used vertices and call a close_up_hull after scanning
+        if point['label'] != label or point['coordinate'] in vertices_in_edge:
+            # Skip all used pivots in edge to prevent self-orientating
             # Skip all instances labelled differently
             # Homogeneity test is checked every round
             continue
@@ -351,38 +351,51 @@ def find_next_pivot(dataset, hull, edge, label,
     while len(pivot) == 3:
         # Find next pivot
         # Feedback: if the pivot suggested is a valid choice
-        _face = form_face(edge, pivot[0])
-        hull.append(_face)
+        if pivot[0] in used_pivots:
+            # Choose back will always generate a homogeneous hull
+            # Skip the checking process
+            pivot = find_pivot.send(True)
+            continue
+
+        check = {}
+        check['_face'] = form_face(edge, pivot[0])
+        hull.append(check['_face'])
         # Update Edge Count based on new face formed
-        _edges = []
-        for i in range(len(_face)):
+        check['_edges'] = []
+        for i in range(len(check['_face'])):
             _edge = []
-            for j, vertex in enumerate(_face):
+            for j, vertex in enumerate(check['_face']):
                 if i != j:
                     _edge.append(vertex)
-            _edges.append(tuple(sort_vertices(_edge)))
-        for _edge in _edges:
+            check['_edges'].append(tuple(sort_vertices(_edge)))
+        for _edge in check['_edges']:
             edge_count[_edge] = edge_count.get(_edge, 0) + 1
 
-        no_face_added = close_up_hull(hull, edge_count, used_pivots)
+        check['number of face added'] = close_up_hull(
+            hull, edge_count, used_pivots)
 
-        homogeneity = check_homogeneity(
+        check['homogeneity'] = check_homogeneity(
             all_instances, hull, label, used_pivots)
         # Revert update
-        while no_face_added:
+        while check['number of face added']:
             hull.pop()  # close_up
-            no_face_added -= 1
+            check['number of face added'] -= 1
 
-        for _edge in _edges:
+        for _edge in check['_edges']:
             edge_count[_edge] -= 1
 
         hull.pop()  # _face
-        if homogeneity:
+        if check['homogeneity']:
             pivot = find_pivot.send(True)
         else:
             pivot = find_pivot.send(False)
 
-    return pivot
+    pivot, found = pivot
+    if not found or pivot in used_pivots:
+        # best next choice is used
+        # stop searching and start closing up
+        return (pivot, False)
+    return (pivot, True)
 
 
 def form_face(edge, pivot):
@@ -434,12 +447,12 @@ def qsort_partition(data, target=1, lhs=0, rhs=None):
     # BUG: Work around instead for now
     # comp = (lambda x, y: x < y)
 
-    _data = []
+    _data = {}
     label = data[0]['label']
     for element in data[lhs:rhs + 1]:
         if element['label'] == label:
-            _data.append(element['coordinate'])
-    data = _data
+            _data[element['coordinate']] = True
+    data = list(_data.keys())
 
     # BUG: Work around instead for now
     """
@@ -482,7 +495,6 @@ def initialize_hull(dataset, all_instances):
     dimension = len(dataset[0]['coordinate'])
     label, edge = qsort_partition(dataset, target=dimension - 1)
     used_pivots = dict(zip(edge, [True] * len(edge)))
-    # edge_count = {tuple(sort_vertices(edge)): 1}
     edge_count = {}
     face = edge
     if len(edge) == dimension - 1:
@@ -648,24 +660,22 @@ def clustering(dataset, logger):
         # List is not empty
         cluster = gift_wrapping(dataset, all_instances)
 
-        hull = cluster['faces']
-        used_vertices = cluster['vertices']
-        dimension = cluster['dimension']
-        label = cluster['label']
-        found = dimension < len(used_vertices)
+        found = cluster['dimension'] < len(cluster['vertices'])
         _dataset = []
         vertices = []
         points = []
         for point in dataset:
             vertex = point['coordinate']
-            if vertex in used_vertices:
+            if vertex in cluster['vertices']:
                 vertices.append(vertex)
             else:
-                _dataset.append(point)
-                if found and check_inside_hull(hull, vertex):
+                if found and check_inside_hull(cluster['faces'], vertex):
                     points.append(vertex)
+                else:
+                    _dataset.append(point)
+
         if found:
-            volume = calculate_volume(hull)
+            volume = calculate_volume(cluster['faces'])
         else:
             volume = 0
 
@@ -674,7 +684,7 @@ def clustering(dataset, logger):
                          'points': points,
                          'size': len(vertices) + len(points),
                          'volume': volume,
-                         'label': label})
+                         'label': cluster['label']})
         if len(clusters) % 100 == 0:
             logger.info(
                 'Clustering: %d clusters found, %d/%d instance processed',
