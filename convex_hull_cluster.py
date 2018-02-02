@@ -648,6 +648,10 @@ def clustering(dataset, logger):
         vertices = []
         points = []
         for point in dataset:
+            if point['label'] != cluster['label']:
+                _dataset.append(point)
+                continue
+
             vertex = point['coordinate']
             if vertex in cluster['vertices']:
                 vertices.append(vertex)
