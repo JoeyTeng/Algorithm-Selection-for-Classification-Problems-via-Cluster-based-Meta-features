@@ -25,6 +25,7 @@ Predefined types:
         [Vertex, ...]
 """
 
+import itertools
 import json
 import logging
 import logging.handlers
@@ -310,13 +311,8 @@ def find_next_pivot(dataset, hull, edge, label,
         check['_face'] = form_face(edge, pivot[0])
         hull.append(check['_face'])
         # Update Edge Count based on new face formed
-        check['_edges'] = []
-        for i in range(len(check['_face'])):
-            _edge = []
-            for j, vertex in enumerate(check['_face']):
-                if i != j:
-                    _edge.append(vertex)
-            check['_edges'].append(tuple(sort_vertices(_edge)))
+        check['_edges'] = list(itertools.combinations(
+            check['_face'], len(check['_face']) - 1))
         for _edge in check['_edges']:
             edge_count[_edge] = edge_count.get(_edge, 0) + 1
 
@@ -375,11 +371,13 @@ def close_up(edge_count, used_pivots):
 
     faces = []
     while edges:
-        for i, edge_a in enumerate(edges):
-            for j, edge_b in enumerate(edges):
-                if i != j and len(set(edge_a).difference(set(edge_b))) == 2:
-                    edges[i], edges[j], edges[-1], edges[-2] =\
-                        edges[-1], edges[-2], edges[i], edges[j]
+        for (i, edge_a), (j, edge_b) in\
+                itertools.combinations(enumerate(edges), 2):
+            if len(set(edge_a).difference(set(edge_b))) == 2:
+                edges[i], edges[j], edges[-1], edges[-2] =\
+                    edges[-1], edges[-2], edges[i], edges[j]
+                break
+
         vertices = {}
         for i in (-1, -1):
             for vertex in edges[i]:
@@ -544,7 +542,7 @@ def queuing_face(face, _queue, edge_count):
                 {edge: int}
             Counting of the number of an edge is used
     """
-    for i in range(len(face) - 1, -1, -1):  # BUG?
+    for i in range(len(face) - 1, -1, -1):
         sub_face = []
         for j, element in enumerate(face):
             if i != j:
