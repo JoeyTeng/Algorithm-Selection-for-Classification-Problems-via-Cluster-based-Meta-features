@@ -371,20 +371,18 @@ def close_up(edge_count, used_pivots):
 
     faces = []
     while edges:
+        vertices = None
         for (i, edge_a), (j, edge_b) in\
                 itertools.combinations(enumerate(edges), 2):
-            if len(set(edge_a).difference(set(edge_b))) == 2:
+            vertices = set(edge_a).union(set(edge_b))
+            if len(vertices) == len(edge_a):
                 edges[i], edges[j], edges[-1], edges[-2] =\
                     edges[-1], edges[-2], edges[i], edges[j]
+                edges.pop()
+                edges.pop()
                 break
 
-        vertices = {}
-        for i in (-1, -1):
-            for vertex in edges[i]:
-                vertices[vertex] = True
-            edges.pop()
-
-        face = list(vertices.keys())
+        face = list(vertices)
         checked = False
         for pivot in used_pivots.keys():
             if pivot not in vertices:
