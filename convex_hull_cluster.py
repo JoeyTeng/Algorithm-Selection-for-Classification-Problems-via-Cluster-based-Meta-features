@@ -370,6 +370,7 @@ def close_up(edge_count, used_pivots):
             edges.append(edge)
 
     faces = []
+    lazy_update = {}
     while edges:
         vertices = None
         for (i, edge_a), (j, edge_b) in\
@@ -381,6 +382,13 @@ def close_up(edge_count, used_pivots):
                 edges.pop()
                 edges.pop()
                 break
+        else:
+            # Cannot find a face, update edges and edges count
+            for edge in lazy_update:  # = .keys()
+                if lazy_update[edge] + edge_count.get(edge, 0) == 1:
+                    edges.append(edge)
+                    lazy_update[edge] = 2  # Avoid duplicated edges
+            continue
 
         face = list(vertices)
         checked = False
@@ -397,6 +405,8 @@ def close_up(edge_count, used_pivots):
             return []
 
         faces.append(tuple(face))
+        for edge in itertools.combinations(tuple(face), len(face) - 1):
+            lazy_update[edge] = lazy_update.get(edge, 0) + 1
 
     return faces
 
