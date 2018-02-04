@@ -375,7 +375,7 @@ def close_up(edge_count, used_pivots):
         for (i, edge_a), (j, edge_b) in\
                 itertools.combinations(enumerate(edges), 2):
             vertices = set(edge_a).union(set(edge_b))
-            if len(vertices) == len(edge_a):
+            if len(vertices) == len(edge_a[0]):
                 edges[i], edges[j], edges[-1], edges[-2] =\
                     edges[-1], edges[-2], edges[i], edges[j]
                 edges.pop()
@@ -390,14 +390,11 @@ def close_up(edge_count, used_pivots):
                 if not check_inside(face=face, pivot=pivot)[0]:
                     # det(A) = -det (B) if two cols swap (odd and even)
                     face[-1], face[-2] = face[-2], face[-1]
-                    break
+                break
 
         if not checked:
-            return False
-            # if not check_inside(face=face, pivot=tuple([0] * len(face[0])))
-            # [0]:
-            #     det(A) = -det (B) if two cols swap (odd and even)
-            #     face[0], face[1] = face[1], face[0]
+            # This edge is the first edge
+            return []
 
         faces.append(tuple(face))
 
@@ -733,6 +730,41 @@ def volume_versus_size(clusters):
     return stats
 
 
+def meta_features(clusters):
+    """
+    Description:
+        Calculating all the meta-features defined using clusters calculated.
+    Parameter:
+        clusters:
+            <type>: <dict>
+            {
+                'vertices': vertices
+                    <type>: list
+                    all the vertices on/defined the hull
+                'points': vertices
+                    <type>: list
+                    all the instances that are in the hull
+                    (same label as homogeniety is maintained)
+                'size': the number of instances belong to this hull
+                    <type>: int
+                    len(vertices) + len(points)
+                'volume':
+                    <type>: float
+                    the volume in the Euclidean n-dimensional space obtained
+                    by the hull
+                'label':
+                    <type>: int
+                    the category that the hull belongs to
+            }
+    Returns:
+
+    """
+    return {'Number of Clusters': len(clusters),
+            'Size versus Number of Clusters':
+                size_versus_number_of_clusters(clusters),
+            'Volume versus Size': volume_versus_size(clusters)}
+
+
 def main(argv):
     """
     main
@@ -769,10 +801,7 @@ def main(argv):
         logger.info('Data points clustered')
 
     logger.debug('Calculating meta-feature indicators')
-    features = {'Number of Clusters': len(clusters),
-                'Size versus Number of Clusters':
-                size_versus_number_of_clusters(clusters),
-                'Volume versus Size': volume_versus_size(clusters)}
+    features = meta_features(clusters)
     logger.debug(
         'Dumping meta-feature indicators into json file: %s',
         clusters_filename)
