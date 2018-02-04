@@ -391,16 +391,13 @@ def close_up(edge_count, used_pivots):
             continue
 
         face = list(vertices)
-        checked = False
-        for pivot in used_pivots.keys():
+        for pivot in used_pivots:  # = .keys()
             if pivot not in vertices:
-                checked = True
                 if not check_inside(face=face, pivot=pivot)[0]:
                     # det(A) = -det (B) if two cols swap (odd and even)
                     face[-1], face[-2] = face[-2], face[-1]
                 break
-
-        if not checked:
+        else:
             # This edge is the first edge
             return []
 
@@ -438,7 +435,21 @@ def close_up_hull(hull, edge_count, used_pivots):
     return len(face_added)
 
 
-sort_vertices = sorted
+def sort_vertices(*args, **kwargs):
+    """
+    A wrapper of sorting functions
+    Using buitin sorted for now
+
+    Args:
+        same as the wrapped function
+
+    Returns
+        same as the wrapped function
+
+    Raises:
+        same as the wrapped fucntion
+    """
+    return sorted(*args, **kwargs)
 
 
 def qsort_partition(data, target=1, lhs=0, rhs=None):
