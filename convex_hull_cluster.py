@@ -24,7 +24,7 @@ Predefined types:
     Vertices: <'list'>
         [Vertex, ...]
 """
-
+import collections
 import itertools
 import json
 import logging
@@ -314,7 +314,7 @@ def find_next_pivot(dataset, hull, edge, label,
         check['_edges'] = list(itertools.combinations(
             check['_face'], len(check['_face']) - 1))
         for _edge in check['_edges']:
-            edge_count[_edge] = edge_count.get(_edge, 0) + 1
+            edge_count[_edge] += 1
 
         check['number of face added'] = close_up_hull(
             hull, edge_count, used_pivots)
@@ -370,7 +370,7 @@ def close_up(edge_count, used_pivots):
             edges.append(edge)
 
     faces = []
-    lazy_update = {}
+    lazy_update = collections.defaultdict(int)  # default = 0
     while edges:
         vertices = None
         for (i, edge_a), (j, edge_b) in\
@@ -385,7 +385,7 @@ def close_up(edge_count, used_pivots):
         else:
             # Cannot find a face, update edges and edges count
             for edge in lazy_update:  # = .keys()
-                if lazy_update[edge] + edge_count.get(edge, 0) == 1:
+                if lazy_update[edge] + edge_count[edge] == 1:
                     edges.append(edge)
                     lazy_update[edge] = 2  # Avoid duplicated edges
             continue
@@ -403,7 +403,7 @@ def close_up(edge_count, used_pivots):
 
         faces.append(tuple(face))
         for edge in itertools.combinations(tuple(face), len(face) - 1):
-            lazy_update[edge] = lazy_update.get(edge, 0) + 1
+            lazy_update[edge] += 1
 
     return faces
 
@@ -486,12 +486,12 @@ def qsort_partition(data, target=1, lhs=0, rhs=None):
     # BUG: Work around instead for now
     # comp = (lambda x, y: x < y)
 
-    _data = {}
+    _data = set()
     label = data[0]['label']
     for element in data[lhs:rhs + 1]:
         if element['label'] == label:
-            _data[element['coordinate']] = True
-    data = list(_data.keys())
+            _data.add(element['coordinate'])
+    data = list(_data)
 
     # BUG: Work around instead for now
     """
@@ -534,7 +534,7 @@ def initialize_hull(dataset, all_instances):
     dimension = len(dataset[0]['coordinate'])
     label, edge = qsort_partition(dataset, target=dimension - 1)
     used_pivots = dict(zip(edge, [True] * len(edge)))
-    edge_count = {}
+    edge_count = collections.defaultdict(int)  # default = 0
     face = edge
     if len(edge) == dimension - 1:
         pivot, found = find_next_pivot(
@@ -565,9 +565,9 @@ def queuing_face(face, _queue, edge_count):
                 sub_face.append(element)
         edge = tuple(sub_face)
         sorted_edge = tuple(sort_vertices(edge))
-        if not edge_count.get(sorted_edge, 0):
+        if not edge_count[sorted_edge]:
             _queue.put(edge)
-        edge_count[sorted_edge] = edge_count.get(sorted_edge, 0) + 1
+        edge_count[sorted_edge] += 1
 
 
 def gift_wrapping(dataset, all_instances):
@@ -724,10 +724,10 @@ def size_versus_number_of_clusters(clusters):
                     int: int
             }
     """
-    stats = {}
+    stats = collections.defaultdict(int)  # default = 0
     for cluster in clusters:
         # initial quantity is 0
-        stats[cluster['size']] = stats.get(cluster['size'], 0) + 1
+        stats[cluster['size']] += 1
     return stats
 
 
@@ -743,11 +743,10 @@ def volume_versus_size(clusters):
                     int: [float]
             }
     """
-    stats = {}
+    stats = collections.defaultdict(list)
     for cluster in clusters:
         # initial container is empty
-        stats[cluster['size']] = stats.get(
-            cluster['size'], []) + [cluster['volume']]
+        stats[cluster['size']].append(cluster['volume'])
     return stats
 
 
@@ -763,9 +762,10 @@ def label_versus_number_of_clusters(clusters):
             <label>: <int>
         }
     """
-    stats = {}
+    stats = collections.defaultdict(int)  # default = 0
     for cluster in clusters:
-        stats[cluster['label']] = stats.get(cluster['label'], 0) + 1
+        stats[cluster['label']] += 1
+    stats['Global'] = len(clusters)
     return stats
 
 
