@@ -751,6 +751,24 @@ def volume_versus_size(clusters):
     return stats
 
 
+def label_versus_number_of_clusters(clusters):
+    """
+    Description:
+    Parameter:
+        clusters
+    Returns:
+        <type>: <dict>
+        {
+            label: number of clusters
+            <label>: <int>
+        }
+    """
+    stats = {}
+    for cluster in clusters:
+        stats[cluster['label']] = stats.get(cluster['label'], 0) + 1
+    return stats
+
+
 def meta_features(clusters):
     """
     Description:
@@ -781,6 +799,8 @@ def meta_features(clusters):
 
     """
     return {'Number of Clusters': len(clusters),
+            'Label versus Number of Clusters':
+                label_versus_number_of_clusters(clusters),
             'Size versus Number of Clusters':
                 size_versus_number_of_clusters(clusters),
             'Volume versus Size': volume_versus_size(clusters)}
