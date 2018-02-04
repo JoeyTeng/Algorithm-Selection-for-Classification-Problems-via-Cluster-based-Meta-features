@@ -1,0 +1,1 @@
+[{"vertices": [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]], "points": [[0.5, 0.5]], "size": 5, "volume": 1.0, "label": 0}, {"vertices": [[0.0, 2.0]], "points": [], "size": 1, "volume": 0, "label": 1}, {"vertices": [[2.0, 0.0], [2.0, 1.0], [2.0, 2.0], [1.0, 2.0]], "points": [], "size": 4, "volume": 1.5, "label": 1}]
