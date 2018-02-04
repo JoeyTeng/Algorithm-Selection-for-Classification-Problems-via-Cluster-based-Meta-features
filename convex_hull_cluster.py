@@ -104,9 +104,10 @@ def signed_volume(vertices):
             From scipy manual
                 https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.linalg.slogdet.html#numpy.linalg.slogdet
     """
-    reference = numpy.array(vertices[0])
-    (sign, logvolume) = numpy.linalg.slogdet(numpy.matrix(
-        [numpy.array(x) - reference for x in vertices[1:]]))
+    dimension = len(vertices[0])
+    (sign, logvolume) = numpy.linalg.slogdet(
+        numpy.stack(vertices[1:]) +
+        numpy.array(vertices[0]) * numpy.ones((dimension, dimension)) * -1)
     return (sign, logvolume)
 
 
@@ -133,8 +134,10 @@ def squared_area(vertices):
             From scipy manual
                 https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.linalg.slogdet.html#numpy.linalg.slogdet
     """
-    reference = numpy.array(vertices[0])
-    matrix = numpy.matrix([numpy.array(x) - reference for x in vertices[1:]])
+    dimension = len(vertices[0])
+    matrix = numpy.matrix(
+        numpy.stack(vertices[1:]) +
+        numpy.array(vertices[0]) * numpy.ones((dimension - 1, dimension)) * -1)
     logvolume = numpy.linalg.slogdet(matrix * matrix.T)[1]  # sign, logvolume
     return logvolume
 
