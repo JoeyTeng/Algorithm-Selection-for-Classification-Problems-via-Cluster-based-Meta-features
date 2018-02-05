@@ -830,17 +830,20 @@ def density_distribution(clusters, slots):
     densities = [
         density for density in raw_densities
         if math.isfinite(density)]
-    lowerbound = min(densities)
-    higherbound = max(densities)
-    _range = higherbound - lowerbound
-    interval = _range / slots
-    if numpy.isclose([interval], [0]):
-        interval = lowerbound
 
     stats = collections.defaultdict(int)
     stats[float('inf')] = len(list(raw_densities)) - len(densities)
-    for density in densities:
-        stats[int((density - lowerbound) / interval)] += 1
+    interval = None
+    if densities:
+        lowerbound = min(densities)
+        higherbound = max(densities)
+        _range = higherbound - lowerbound
+        interval = _range / slots
+        if numpy.isclose([interval], [0]):
+            interval = lowerbound
+
+        for density in densities:
+            stats[int((density - lowerbound) / interval)] += 1
 
     return {'interval': interval,
             'stats': stats}
