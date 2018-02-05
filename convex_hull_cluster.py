@@ -7,9 +7,6 @@
 """
 Input argument list:
     dataset_filename
-    clusters_filename
-    output_filename
-    log_file(optional)
 Predefined types:
     Point: <'dict'>
         {'coordinate': (float, ...), 'label': int}
@@ -29,6 +26,7 @@ import itertools
 import json
 import logging
 import logging.handlers
+import math
 import queue
 import sys
 
@@ -767,33 +765,123 @@ def volume_versus_size(clusters):
     return stats
 
 
-def label_versus_number_of_clusters(clusters):
-    """
-    Description:
-    Parameter:
+def centroid(clusters):
+    """The centroid of the vertices on the convex hulls
+        (i.e. exclude the inner instances)
+
+    Args:
         clusters
+
     Returns:
-        <type>: <dict>
-        {
-            label: number of clusters
-            <label>: <int>
-        }
+        [vertex, ...]
     """
-    stats = collections.defaultdict(int)  # default = 0
+    centroids = list(map(
+        lambda cluster: tuple(map(
+            lambda x, cluster=cluster: x / len(cluster['vertices']),
+            sum(map(
+                numpy.array,
+                cluster['vertices'])))),
+        clusters))
+    return centroids
+
+
+def calculate_density(cluster):
+    """Density of a cluster
+
+    density = size / volume
+
+    Args:
+        cluster
+
+    Returns:
+        density:
+            float
+    """
+    try:
+        density = cluster['size'] / cluster['volume']
+    except ZeroDivisionError:
+        return float('inf')
+    return density
+
+
+def density_distribution(clusters, slots):
+    """Number of clusters in each density interval
+
+    [lb - 1 * interval, ... (slots - 1) * interval - hb]
+    lb = lower bound
+    hb = higher bound
+    interval = range / slots = (hb - lb) / slots
+
+    Args:
+        slots:
+            number of intervals
+
+    Returns:
+        interval:
+            <type>: <float>
+            range / slots
+        stats:
+            <type>: <dict>
+            from lower bound to higher
+            {inf: int, n-th slot: int, ...}
+            [lb - 1 * interval, ... (slots - 1) * interval - hb]
+    """
+    raw_densities = list(map(calculate_density, clusters))
+    densities = [
+        density for density in raw_densities
+        if math.isfinite(density)]
+    lowerbound = min(densities)
+    higherbound = max(densities)
+    _range = higherbound - lowerbound
+    interval = _range / slots
+    if numpy.isclose([interval], [0]):
+        interval = lowerbound
+
+    stats = collections.defaultdict(int)
+    stats[float('inf')] = len(list(raw_densities)) - len(densities)
+    for density in densities:
+        stats[int((density - lowerbound) / interval)] += 1
+
+    return {'interval': interval,
+            'stats': stats}
+
+
+def label_versus_meta_features(clusters, func, *args, **kwargs):
+    """Calculate meta-features for clusters with each label
+
+    Separate clusters based on label and call the funcitons
+    Include a '_population' label which indicate the meta-feature over
+        the population regardless of the label
+
+    Args:
+        clusters:
+        func:
+            the function that used to calculate the meta-feature required
+
+    Returns:
+        stats:
+            <type>: <dict>
+            {
+                label: corresponding meta-feature
+            }
+    """
+    _clusters = collections.defaultdict(list)
+    _clusters['_population'] = clusters
     for cluster in clusters:
-        stats[cluster['label']] += 1
-    stats['Global'] = len(clusters)
+        _clusters[cluster['label']].append(cluster)
+    stats = {}
+    for label in _clusters:
+        stats[label] = func(_clusters[label], *args, **kwargs)
     return stats
 
 
 def meta_features(clusters):
-    """
-    Description:
-        Calculating all the meta-features defined using clusters calculated.
-    Parameter:
+    """Calculating all the meta-features defined using clusters calculated.
+
+    Args:
         clusters:
-            <type>: <dict>
-            {
+            <type>: <list>
+            [{
                 'vertices': vertices
                     <type>: list
                     all the vertices on/defined the hull
@@ -811,16 +899,20 @@ def meta_features(clusters):
                 'label':
                     <type>: int
                     the category that the hull belongs to
-            }
+            }, ...]
+
     Returns:
 
     """
-    return {'Number of Clusters': len(clusters),
-            'Label versus Number of Clusters':
-                label_versus_number_of_clusters(clusters),
+    return {'Number of Clusters':
+            label_versus_meta_features(clusters, len),
             'Size versus Number of Clusters':
-                size_versus_number_of_clusters(clusters),
-            'Volume versus Size': volume_versus_size(clusters)}
+                label_versus_meta_features(
+                    clusters, size_versus_number_of_clusters),
+            'Volume versus Size':
+                label_versus_meta_features(clusters, volume_versus_size),
+            'Density distribution over 10 intervals':
+                label_versus_meta_features(clusters, density_distribution, 10)}
 
 
 def main(argv):
