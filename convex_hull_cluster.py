@@ -36,8 +36,21 @@ import numpy
 
 
 def initialize_logger(filename=None, level=logging.INFO, filemode='w'):
-    """
-    Initialize a logger in module logging
+    """Initialize a logger in module logging
+
+    Args:
+        filename:
+            <type>: <string>
+                the path of log file
+            <default>: None
+                stream to the standard output
+        level:
+            logging level
+        filemode:
+            'w' or 'a', overwrite or append
+
+    Returns:
+        logger
     """
     log_format = '%(asctime)s %(levelname)s\n' + \
         '  %(filename)s:%(lineno)s: %(name)s %(message)s'
@@ -57,8 +70,9 @@ def initialize_logger(filename=None, level=logging.INFO, filemode='w'):
 
 
 def load_dataset(filename):
-    """
-    Parameters:
+    """Load data from a csv file
+
+    Args:
         filename: path of input file.
             CSV format
             [coordinate, ...] + [label]
@@ -810,9 +824,7 @@ def meta_features(clusters):
 
 
 def main(argv):
-    """
-    main
-    """
+    """main"""
     dataset_filename = argv[0]
     clusters_filename = dataset_filename + ".clusters.json"
     output_filename = dataset_filename + ".output.json"
