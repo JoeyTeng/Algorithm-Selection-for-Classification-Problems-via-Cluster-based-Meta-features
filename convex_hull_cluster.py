@@ -784,7 +784,7 @@ def clustering_by_label(instances, label, meta_dataset, logger):
         if found:
             volume = round(calculate_volume(cluster['faces']), 15)
         elif len(cluster['faces'][0]) > 1:
-            volume = round(squared_area(cluster['faces'][0]), 15)
+            volume = round(numpy.exp(squared_area(cluster['faces'][0])), 15)
         else:
             volume = 0.0
 
