@@ -267,7 +267,7 @@ def pivot_on_edge(instances, edge, used_pivots):
     if check:
         homogeneity = True
 
-    for instance in instances[index + 1:]:
+    for instance in instances:
         if instance in vertices_in_edge:
             # Skip all used pivots in edge to prevent self-orientating
             # Skip all instances labelled differently
@@ -326,8 +326,10 @@ def find_next_pivot(instances, hull, edge,
         check['_face'] = form_face(edge, pivot[0])
         hull.append(check['_face'])
         # Update Edge Count based on new face formed
-        check['_edges'] = list(itertools.combinations(
-            check['_face'], len(check['_face']) - 1))
+        check['_edges'] = [
+            tuple(sort_vertices(edge))
+            for edge in itertools.combinations(
+                check['_face'], len(check['_face']) - 1)]
         for _edge in check['_edges']:
             edge_count[_edge] += 1
 
@@ -403,10 +405,14 @@ def close_up(edge_count, used_pivots):
                 break
         else:
             # Cannot find a face, update edges and edges count
+            updated = False
             for edge in lazy_update:  # = .keys()
                 if lazy_update[edge] + edge_count[edge] == 1:
                     edges.append(edge)
                     lazy_update[edge] = 2  # Avoid duplicated edges
+                    updated = True
+            if not updated:
+                break
             continue
 
         face = list(vertices)
@@ -422,7 +428,7 @@ def close_up(edge_count, used_pivots):
 
         faces.append(tuple(face))
         for edge in itertools.combinations(tuple(face), len(face) - 1):
-            lazy_update[edge] += 1
+            lazy_update[tuple(sort_vertices(edge))] += 1
 
     return faces
 
@@ -676,7 +682,7 @@ def clustering(dataset, logger):
         dict: Clusters obtained separated by labels
             label: clusters (list of dict objects)
                 [{
-                'vertices' (list): Instances on the hull
+                'vertices' (list): Turning instances on the hull
                     [Vertex, ...],
                 'points': Instances in the hull. Vertices are excluded
                     [Vertex, ...]
@@ -743,7 +749,7 @@ def clustering_by_label(instances, label, meta_dataset, logger):
                     _dataset.append(vertex)
 
         if found:
-            volume = calculate_volume(cluster['faces'])
+            volume = round(calculate_volume(cluster['faces']), 15)
         else:
             volume = 0
 
