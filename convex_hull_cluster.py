@@ -28,6 +28,7 @@ import json
 import logging
 import logging.handlers
 import math
+import multiprocessing.pool
 import queue
 import sys
 
@@ -686,7 +687,6 @@ def clustering(dataset, logger):
                 }, ...]
 
     """
-    clusters = []
     all_instances = dataset
     meta_dataset = collections.defaultdict(list)
     for instance in all_instances:
@@ -698,7 +698,10 @@ def clustering(dataset, logger):
             clustering_by_label,
             (item[1], item[0], meta_dataset, logger)), meta_dataset.items())
 
-    clusters = dict(map(map_generate_tuple, tasklist))
+    pool = multiprocessing.pool.Pool()
+    clusters = dict(pool.map(map_generate_tuple, tasklist))
+    pool.close()
+    pool.join()
 
     return clusters
 
