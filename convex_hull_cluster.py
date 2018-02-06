@@ -37,7 +37,7 @@ import sys
 import numpy
 import scipy.special
 
-PROCESS_COUNT = int(os.cpu_count() ** 0.5)
+PROCESS_COUNT = int(os.cpu_count() / 2)
 
 
 def _tree():
