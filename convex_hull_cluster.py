@@ -223,11 +223,25 @@ def check_homogeneity(impurities, hull, used_pivots):
 
     """
     for instance in impurities:
-        if instance in used_pivots:
-            continue
         if check_inside_hull(hull, instance):
             return False
+    return True
 
+
+def check_convexity(hull, used_pivots):
+    """Check if the hull is convex.
+
+    Args:
+        hull (list): Faces on the hull
+        used_pivots (set): set of turning points on the hull
+
+    Returns:
+        bool: If the hull maintains convexity
+
+    """
+    for instance in used_pivots:
+        if not check_inside_hull(hull, instance):
+            return False
     return True
 
 
@@ -302,7 +316,7 @@ def find_next_pivot(instances, hull, edge,
                     used_pivots, edge_count, impurities):
     """Find next available vertex while ensure the homogeneity.
 
-    Iteratively call pivot_on_edge() and check_homogeneity()
+    Iteratively call pivot_on_edge(), check_homogeneity() and check_convexity()
        to find the next available vertex on the hull.
 
     Args:
@@ -332,6 +346,8 @@ def find_next_pivot(instances, hull, edge,
         check = {}
         check['_face'] = form_face(edge, pivot[0])
         hull.append(check['_face'])
+        used_pivots.add(pivot[0])
+
         # Update Edge Count based on new face formed
         check['_edges'] = [
             tuple(sort_vertices(edge))
@@ -345,6 +361,7 @@ def find_next_pivot(instances, hull, edge,
 
         check['homogeneity'] = check_homogeneity(
             impurities, hull, used_pivots)
+        check['convexity'] = check_convexity(hull, used_pivots)
         # Revert update
         while check['number of face added']:
             hull.pop()  # close_up
@@ -353,8 +370,9 @@ def find_next_pivot(instances, hull, edge,
         for _edge in check['_edges']:
             edge_count[_edge] -= 1
 
+        used_pivots.remove(pivot[0])
         hull.pop()  # _face
-        if check['homogeneity']:
+        if check['homogeneity'] and check['convexity']:
             pivot = find_pivot.send(True)
         else:
             pivot = find_pivot.send(False)
@@ -621,6 +639,7 @@ def gift_wrapping(instances, impurities, logger):
             }
 
     """
+    instances = sorted(set(instances))
     dimension, face, used_pivots, edge_count = initialize_hull(
         instances, impurities)
     _queue = queue.LifoQueue()
@@ -650,7 +669,7 @@ def gift_wrapping(instances, impurities, logger):
             hull=hull, edge=edge, used_pivots=used_pivots,
             edge_count=edge_count, impurities=impurities)
         result = pool.map(func, instances)
-        result = list(map(func, instances))
+        # result = list(map(func, instances))
         pool.close()
         pool.join()
 
@@ -1011,7 +1030,7 @@ def main(argv):
     log_file = dataset_filename + ".log"
 
     logger = initialize_logger(log_file)
-    logger.info('Start')
+    logger.info('Start: Version 1.0.1')
     logger.debug('Logger initialized')
     logger.debug('sys.argv: %r', sys.argv)
 
