@@ -886,10 +886,10 @@ def calculate_density(cluster):
         float: density
 
     """
-    try:
-        density = cluster['size'] / cluster['volume']
-    except ZeroDivisionError:
+    if numpy.isclose([cluster['volume']], [0]):
         return float('inf')
+
+    density = cluster['size'] / cluster['volume']
     return density
 
 
