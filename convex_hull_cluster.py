@@ -35,6 +35,7 @@ import queue
 import sys
 
 import numpy
+import scipy.special
 
 PROCESS_COUNT = int(os.cpu_count() ** 0.5)
 
@@ -184,7 +185,8 @@ def check_inside(face, instance, edge=None, area=None):
     sign, logvolume = signed_volume(form_face(face, instance))
     _face = form_face(edge, instance)
     _area = squared_area(_face)
-    if (numpy.isclose([numpy.e**logvolume], [0]) and _area > area) or sign < 0:
+    if ((numpy.isclose([numpy.exp(logvolume)], [0]) and _area > area)
+       or sign < 0):
         # outside
         return (False, _face, _area)
     return (True, _face, _area)
@@ -780,8 +782,10 @@ def clustering_by_label(instances, label, meta_dataset, logger):
 
         if found:
             volume = round(calculate_volume(cluster['faces']), 15)
+        elif len(cluster['faces'][0]) > 1:
+            volume = round(squared_area(cluster['faces'][0]), 15)
         else:
-            volume = 0
+            volume = 0.0
 
         instances = _dataset
         clusters.append({'vertices': vertices,
@@ -812,8 +816,9 @@ def calculate_volume(hull):
     volume = 0.0
     for face in hull:
         logvolume = signed_volume(form_face(face, origin))[1]
-        volume += numpy.e ** logvolume
-    volume /= 2  # Triangles = det / 2
+        volume += numpy.exp(logvolume)
+    # n-dimensional simplex = det / n!
+    volume /= scipy.special.factorial(len(origin))
 
     return volume
 
