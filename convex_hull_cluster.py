@@ -23,16 +23,20 @@ Output files:
 
 """
 import collections
+import functools
 import itertools
 import json
 import logging
 import logging.handlers
 import math
 import multiprocessing.pool
+import os
 import queue
 import sys
 
 import numpy
+
+PROCESS_COUNT = int(os.cpu_count() ** 0.5)
 
 
 def _tree():
@@ -40,7 +44,7 @@ def _tree():
     return collections.defaultdict(_tree)
 
 
-def initialize_logger(filename=None, level=logging.INFO, filemode='w'):
+def initialize_logger(filename=None, level=logging.DEBUG, filemode='w'):
     """Initialize a logger in module logging.
 
     Args:
@@ -593,7 +597,7 @@ def queuing_face(face, _queue, edge_count):
         edge_count[sorted_edge] += 1
 
 
-def gift_wrapping(instances, impurities):
+def gift_wrapping(instances, impurities, logger):
     """Use modified gift-wrapping method for convex hull building.
 
     Two stages: Finding new vertex & Close-up
@@ -624,14 +628,44 @@ def gift_wrapping(instances, impurities):
     hull.append(face)
     vertices = [coordinate for coordinate in face]
 
+    slices = 8
+    all_instances = instances
+    instances = [
+        all_instances[
+            int(len(all_instances) * i / slices):
+            int(len(all_instances) * (i + 1) / slices)]
+        for i in range(slices)]
     # First stage: find all new pivots
     while not _queue.empty():
         edge = _queue.get()
-        pivot, found = find_next_pivot(
-            instances, hull, edge,
-            used_pivots, edge_count, impurities)
+        if edge_count[edge] > 1:
+            continue
+
+        # pool = multiprocessing.pool.Pool(PROCESS_COUNT)
+        func = functools.partial(
+            find_next_pivot,
+            hull=hull, edge=edge, used_pivots=used_pivots,
+            edge_count=edge_count, impurities=impurities)
+        # result = pool.map(func, instances)
+        result = list(map(func, instances))
+        # pool.close()
+        # pool.join()
+
+        not_found = [i[0] for i in enumerate(result) if i[1][0] is None]
+        candidate = [element[0] for element in result if element[0]]
+        pivot, found = func(candidate)
+        if found:
+            pivot, found = func(list(itertools.chain(
+                *[instances[i] for i in not_found], [pivot])))
         if not found:
             continue
+
+
+        # pivot, found = find_next_pivot(
+        #     instances, hull, edge,
+        #     used_pivots, edge_count, impurities)
+        # if not found:
+        #     continue
 
         face = form_face(edge, pivot)
         vertices.append(pivot)
@@ -639,9 +673,11 @@ def gift_wrapping(instances, impurities):
         hull.append(face)
         queuing_face(face, _queue, edge_count)
 
+    logger.debug("gift_wrapping: First stage complete. Starting second.")
     # Second stage: close up the hull
     if dimension < len(used_pivots):
         close_up_hull(hull, edge_count, used_pivots)
+    logger.debug("gift_wrapping: Second stage complete.")
     return {
         "faces": hull,
         "vertices": used_pivots,
@@ -704,10 +740,11 @@ def clustering(dataset, logger):
             clustering_by_label,
             (item[1], item[0], meta_dataset, logger)), meta_dataset.items())
 
-    pool = multiprocessing.pool.Pool()
-    clusters = dict(pool.map(map_generate_tuple, tasklist))
-    pool.close()
-    pool.join()
+    # pool = multiprocessing.pool.Pool(PROCESS_COUNT)
+    # clusters = dict(pool.map(map_generate_tuple, tasklist))
+    clusters = dict(map(map_generate_tuple, tasklist))
+    # pool.close()
+    # pool.join()
 
     return clusters
 
@@ -733,7 +770,7 @@ def clustering_by_label(instances, label, meta_dataset, logger):
 
     while instances:
         # List is not empty
-        cluster = gift_wrapping(instances, impurities)
+        cluster = gift_wrapping(instances, impurities, logger)
 
         found = cluster['dimension'] < len(cluster['vertices'])
         _dataset = []
@@ -758,12 +795,12 @@ def clustering_by_label(instances, label, meta_dataset, logger):
                          'points': points,
                          'size': len(vertices) + len(points),
                          'volume': volume})
-        if len(clusters) % 5 == 0:
-            logger.info(
-                'Clustering: %d clusters found, '
-                '%d/%d instance processed for label %r',
-                len(clusters), len(meta_dataset[label]) - len(instances),
-                len(impurities) + len(meta_dataset[label]), label)
+        # if len(clusters) % 5 == 0:
+        logger.info(
+            'Clustering: %d clusters found, '
+            '%d/%d instance processed for label %r',
+            len(clusters), len(meta_dataset[label]) - len(instances),
+            len(impurities) + len(meta_dataset[label]), label)
 
     return clusters
 
