@@ -723,7 +723,7 @@ def clustering_by_label(instances, label, meta_dataset, logger):
     impurities = {
         item[0]: item[1]
         for item in meta_dataset.items() if item[0] != label}
-    impurities = itertools.chain(*impurities.values())
+    impurities = list(itertools.chain(*impurities.values()))
 
     while instances:
         # List is not empty
