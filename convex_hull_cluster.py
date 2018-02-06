@@ -631,7 +631,7 @@ def gift_wrapping(instances, impurities, logger):
     hull.append(face)
     vertices = [coordinate for coordinate in face]
 
-    slices = 8
+    slices = PROCESS_COUNT
     all_instances = instances
     instances = [
         all_instances[
