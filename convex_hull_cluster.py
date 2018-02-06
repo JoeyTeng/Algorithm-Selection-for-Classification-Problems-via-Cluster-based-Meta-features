@@ -641,15 +641,15 @@ def gift_wrapping(instances, impurities, logger):
         if edge_count[edge] > 1:
             continue
 
-        # pool = multiprocessing.pool.Pool(PROCESS_COUNT)
+        pool = multiprocessing.pool.Pool(PROCESS_COUNT)
         func = functools.partial(
             find_next_pivot,
             hull=hull, edge=edge, used_pivots=used_pivots,
             edge_count=edge_count, impurities=impurities)
-        # result = pool.map(func, instances)
+        result = pool.map(func, instances)
         result = list(map(func, instances))
-        # pool.close()
-        # pool.join()
+        pool.close()
+        pool.join()
 
         not_found = [i[0] for i in enumerate(result) if i[1][0] is None]
         candidate = [element[0] for element in result if element[0]]
@@ -659,13 +659,6 @@ def gift_wrapping(instances, impurities, logger):
                 *[instances[i] for i in not_found], [pivot])))
         if not found:
             continue
-
-
-        # pivot, found = find_next_pivot(
-        #     instances, hull, edge,
-        #     used_pivots, edge_count, impurities)
-        # if not found:
-        #     continue
 
         face = form_face(edge, pivot)
         vertices.append(pivot)
@@ -795,7 +788,7 @@ def clustering_by_label(instances, label, meta_dataset, logger):
                          'points': points,
                          'size': len(vertices) + len(points),
                          'volume': volume})
-        # if len(clusters) % 5 == 0:
+
         logger.info(
             'Clustering: %d clusters found, '
             '%d/%d instance processed for label %r',
