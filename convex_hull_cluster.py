@@ -4,22 +4,23 @@
 # @Filename: convex_hull_cluster.py
 # @Last modified by:   Toujour
 # @Last modified time: 24-Jan-2018
-"""
-Input argument list:
-    dataset_filename
+"""Obtain clusters and calculate meta-features.
+
+Args:
+    dataset_filename (string): path to the dataset
+
 Predefined types:
-    Point: <'dict'>
-        {'coordinate': (float, ...), 'label': int}
-
-    Dataset: <'list'>
-        list of dict objects:
+    Point (dict): {'coordinate': (float, ...), 'label': int}
+    Dataset (list): list of dict objects:
         [Point, ...]
+    Vertex (tuple): Point['coordinate']
+    Vertices (list): [Vertex, ...]
 
-    Vertex: <'tuple'>
-        Point['coordinate']
+Output files:
+    dataset_filename.output.json: calculated meta-features.
+    dataset_filename.clusters.json: calculated clusters.
+    dataset_filename.log: log file
 
-    Vertices: <'list'>
-        [Vertex, ...]
 """
 import collections
 import itertools
@@ -33,22 +34,25 @@ import sys
 import numpy
 
 
+def _tree():
+    """Define a recursive structure of collection.defaultdict(self)."""
+    return collections.defaultdict(_tree)
+
+
 def initialize_logger(filename=None, level=logging.INFO, filemode='w'):
-    """Initialize a logger in module logging
+    """Initialize a logger in module logging.
 
     Args:
-        filename:
-            <type>: <string>
-                the path of log file
-            <default>: None
-                stream to the standard output
-        level:
-            logging level
-        filemode:
+        filename (string, optional): Defaults to None.
+            The path of log file
+            By default, logger will stream to the standard output
+        level (logging level, optional): Defaults to logging.INFO
+        filemode (string, optional): Defaults to 'w'.
             'w' or 'a', overwrite or append
 
     Returns:
-        logger
+        logger: [description]
+
     """
     log_format = '%(asctime)s %(levelname)s\n' + \
         '  %(filename)s:%(lineno)s: %(name)s %(message)s'
@@ -68,16 +72,16 @@ def initialize_logger(filename=None, level=logging.INFO, filemode='w'):
 
 
 def load_dataset(filename):
-    """Load data from a csv file
+    """Load data from a csv file.
 
     Args:
-        filename: path of input file.
+        filename (string): path of input file.
             CSV format
             [coordinate, ...] + [label]
 
     Returns:
-        dataset:
-            <type>: Dataset
+        Dataset: dataset
+
     """
     return [(
         lambda point: {
@@ -89,32 +93,30 @@ def load_dataset(filename):
 
 
 def signed_volume(vertices):
-    """
-    Description:
-        Calculate the signed volume of n-dimensional simplex
-            defined by (n + 1) vertices
-        Reference:
-            Wedge Product: http://mathworld.wolfram.com/WedgeProduct.html
+    """Calculate the signed volume of n-dimensional simplex.
 
-    Parameters:
-        vertices:
-            <type>: Vertices
+    The simplex is defined by (n + 1) vertices
+    Reference:
+        Wedge Product: http://mathworld.wolfram.com/WedgeProduct.html
+
+    Args:
+        vertices (Vertices): Define the n-d simplex.
 
     Returns:
-        sign : (...) array_like
-            A number representing the sign of the determinant. For a real
-                matrix, this is 1, 0, or -1. For a complex matrix, this is a
-                complex number with absolute value 1 (i.e., it is on the unit
-                circle), or else 0.
-        logdet : (...) array_like
-            The natural log of the absolute value of the determinant.
+        tuple: (
+            sign (float):
+                -1, 0 or 1, the sign of the signed volume,
+            logvolume (float):
+                The natural log of the absolute value of the volume)
 
-        If the determinant is zero, then sign will be 0 and logdet will be
-        -Inf. In all cases, the determinant is equal to sign * np.exp(logdet).
+        If the signed volume is zero, then sign will be 0
+            and logvolume will be -Inf.
+        In all cases, the signed volume is equal to sign * np.exp(logvolume)
 
-        Reference:
-            From scipy manual
-                https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.linalg.slogdet.html#numpy.linalg.slogdet
+    Reference:
+        From scipy manual
+            https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.linalg.slogdet.html#numpy.linalg.slogdet
+
     """
     dimension = len(vertices[0])
     (sign, logvolume) = numpy.linalg.slogdet(
@@ -124,27 +126,24 @@ def signed_volume(vertices):
 
 
 def squared_area(vertices):
-    """
-    Description:
-        Calculate the squared area of (n - 1)-dimensional simplex defined by
-            n vertices in n-dimensional space
-        Reference:
-            Wedge Product: http://mathworld.wolfram.com/WedgeProduct.html
+    """Calculte the squared area of the n-1-d simplex.
 
-    Parameters:
-        vertices:
-            <type>: Vertices
+    Calculate the squared area of (n - 1)-dimensional simplex defined by
+        n vertices in n-dimensional space
+    Reference:
+        Wedge Product: http://mathworld.wolfram.com/WedgeProduct.html
+
+
+    Args:
+        vertices (Vertices): Define the n-1-d simplex
 
     Returns:
-        logdet : (...) array_like
-            The natural log of the absolute value of the determinant.
+        float: The natural log of the squared area of the simplex
 
-        If the determinant is zero, then sign will be 0 and logdet will be
-        -Inf. In all cases, the determinant is equal to sign * np.exp(logdet).
+    Reference:
+        From scipy manual
+            https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.linalg.slogdet.html#numpy.linalg.slogdet
 
-        Reference:
-            From scipy manual
-                https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.linalg.slogdet.html#numpy.linalg.slogdet
     """
     dimension = len(vertices[0])
     matrix = numpy.matrix(
@@ -154,36 +153,31 @@ def squared_area(vertices):
     return logvolume
 
 
-def check_inside(face=None, pivot=None, edge=None, area=None):
-    """
-    Description
-    Parameters:
-        face:
-        pivot:
-            <type>: Vertex
-        edge:
-            Default:
-                face[:-1]
-        area:
-            Default:
-                squared_area(face)
+def check_inside(face, instance, edge=None, area=None):
+    """Check if the instance given is at the inner side of the face.
+
+    Args:
+        face (Vertices): [description]
+        instance (Vertex): [description]
+        edge (Vertices, optional): Defaults to None.
+            By default, edge = face[:-1]
+            Used to calculate the area and
+                thus check when instance is on the same plane with the face.
+        area (float, optional): Defaults to None.
+            By default, area = squared_area(face)
+
     Returns:
-        inside:
-            <type>: bool
-        face:
-            new face generated with (edge + pivot)
-        area:
-            new squared_area calculated using _face
+        tuple: (
+            inside (bool),
+            new face generated with (edge + pivot) (Vertices),
+            new squared_area calculated using new face (float))
+
     """
-    if face is None or pivot is None:
-        raise ValueError(
-            "Wrong parameters given: face is {0}, pivot is {1}".format(
-                type(face), type(pivot)))
     edge = edge or face[:-1]
     area = area or squared_area(face)
 
-    sign, logvolume = signed_volume(form_face(face, pivot))
-    _face = form_face(edge, pivot)
+    sign, logvolume = signed_volume(form_face(face, instance))
+    _face = form_face(edge, instance)
     _area = squared_area(_face)
     if (numpy.isclose([numpy.e**logvolume], [0]) and _area > area) or sign < 0:
         # outside
@@ -191,67 +185,71 @@ def check_inside(face=None, pivot=None, edge=None, area=None):
     return (True, _face, _area)
 
 
-def check_inside_hull(hull, pivot):
-    """
-    Description:
-    Parameters:
+def check_inside_hull(hull, instance):
+    """Check if the instance given is inside the hull.
+
+    Args:
+        hull (list): Faces on the hull
+        instance (Vertex): [description]
+
     Returns:
-        inside:
-            <type>: bool
+        bool: If the instance is inside the hull
+
     """
     for face in hull:
-        if not check_inside(face=face, pivot=pivot)[0]:
+        if not check_inside(face=face, instance=instance)[0]:
             return False
     return True
 
 
-def check_homogeneity(all_instances, hull, label, used_pivots):
-    """
-    Description:
-    Parameters:
-        all_instances:
-        hull:
-        label:
-        used_pivots:
-            <type>: dict
-                {Vertex: True}
+def check_homogeneity(impurities, hull, used_pivots):
+    """Check if the hull is homogeneous.
+
+    Args:
+        impurities (Vertices): Instances with different label
+        hull (list): all the faces of the hull
+        used_pivots (set): [description]
+
     Returns:
-        homogeneity:
-            <type>: bool
+        bool: If the convex hull have homogeneity
+
     """
-    for point in all_instances:
-        pivot = point['coordinate']
-        _label = point['label']
-        if pivot in used_pivots or _label == label:
+    for instance in impurities:
+        if instance in used_pivots:
             continue
-        if check_inside_hull(hull, pivot):
+        if check_inside_hull(hull, instance):
             return False
 
     return True
 
 
-def pivot_on_edge(dataset, edge, label, used_pivots):
-    """
-    Description:
-    Parameters:
-        dataset:
-            <type>: Dataset
+def pivot_on_edge(instances, edge, used_pivots):
+    """Search for the next best possible vertex on the hull.
 
-        edge:
-            <type>: Vertices
+    Homogeneity of the hull may not be maintained.
 
-        label:
-            <type>: Point['label']
+    Args:
+        instances (Vertices): [description]
+        edge (Vertices): [description]
+        used_pivots (set): [description]
+
     Recieve:
+        Homogeneity (bool): If the choice of the vertex will maintain
+            the homogeneity of the hull
+
     Yields:
-    Returns:
+        tuple:
+            (None, False): No vertex is found
+            (pivot (Vertex), homogeneity (bool)): A candidate is returned,
+                with the side-effect of homogeneity of the hull
+            (pivot (Vertex)): A candidate is found and
+                checking of homogeniety is requested
+
     """
     vertices_in_edge = set(edge)
     index = 0
-    length = len(dataset)
-    while index < length and \
-            (dataset[index]['label'] != label or
-             dataset[index]['coordinate'] in used_pivots):
+    length = len(instances)
+    while index < length and instances[index] in used_pivots:
         index += 1
 
     if index == length:
@@ -259,61 +257,62 @@ def pivot_on_edge(dataset, edge, label, used_pivots):
         return
 
     homo = {}
-    homo['pivot'] = dataset[index]['coordinate']
+    homo['pivot'] = instances[index]
     homo['face'] = form_face(edge, homo['pivot'])
     homo['area'] = squared_area(homo['face'])
 
-    found = False
-    check = yield [homo['pivot'], label, None]
+    homogeneity = False
+    check = yield (homo['pivot'], )
     if check:
-        found = True
+        homogeneity = True
 
-    for point in dataset[index + 1:]:
-        if point['label'] != label or point['coordinate'] in vertices_in_edge:
+    for instance in instances[index + 1:]:
+        if instance in vertices_in_edge:
             # Skip all used pivots in edge to prevent self-orientating
             # Skip all instances labelled differently
             # Homogeneity test is checked every round
             continue
 
         current = {}
-        current['pivot'] = point['coordinate']
+        current['pivot'] = instance
         inside, current['face'], current['area'] = check_inside(
-            face=homo['face'], pivot=current['pivot'],
+            homo['face'], current['pivot'],
             edge=edge, area=homo['area'])
 
         if not inside:
-            check = yield [current['pivot'], label, None]
+            check = yield (current['pivot'], )
             if check:
                 # update
                 homo = current
-                found = True
+                homogeneity = True
 
-    yield (homo['pivot'], found)
+    yield (homo['pivot'], homogeneity)
     return
 
 
-def find_next_pivot(dataset, hull, edge, label,
-                    used_pivots, edge_count, all_instances):
-    """
-    Description:
-    Parameters:
-        dataset:
-        hull:
-        edge:
-        label:
+def find_next_pivot(instances, hull, edge,
+                    used_pivots, edge_count, impurities):
+    """Find next available vertex while ensure the homogeneity.
 
-        used_pivots:
-        edge_count:
-        all_instances:
+    Iteratively call pivot_on_edge() and check_homogeneity()
+       to find the next available vertex on the hull.
+
+    Args:
+        instances (Vertices):
+        hull (list): Faces of the hull
+        edge (Vertex):
+        used_pivots (set):
+        edge_count (list):
+        impurities (Vertices):
+
     Returns:
-        pivot:
-            Vertex
-        found:
-            bool
+        pivot (Vertex):
+        found (bool):
+
     """
-    find_pivot = pivot_on_edge(dataset, edge, label, used_pivots)
+    find_pivot = pivot_on_edge(instances, edge, used_pivots)
     pivot = next(find_pivot)
-    while len(pivot) == 3:
+    while len(pivot) == 1:
         # Find next pivot
         # Feedback: if the pivot suggested is a valid choice
         if pivot[0] in used_pivots:
@@ -335,7 +334,7 @@ def find_next_pivot(dataset, hull, edge, label,
             hull, edge_count, used_pivots)
 
         check['homogeneity'] = check_homogeneity(
-            all_instances, hull, label, used_pivots)
+            impurities, hull, used_pivots)
         # Revert update
         while check['number of face added']:
             hull.pop()  # close_up
@@ -359,25 +358,29 @@ def find_next_pivot(dataset, hull, edge, label,
 
 
 def form_face(edge, pivot):
-    """
-    Description
-    Parameters:
-        edge:
-            <type>: Vertices
-        pivot:
-            <type>: Point['coordinate']
+    """Form face by appending pivot and convert it into a tuple.
+
+    Args:
+        edge (Vertices): [description]
+        pivot (Vertex): [description]
+
+    Returns:
+        tuple: Face formed
+
     """
     return tuple(list(edge) + [pivot])
 
 
 def close_up(edge_count, used_pivots):
-    """
-    Description:
-    Parameters:
-        edge_count:
-        used_pivots:
+    """Provide faces required to close up the hull with existing vertices.
+
+    Args:
+        edge_count (dict): [description]
+        used_pivots (set): [description]
+
     Returns:
-        face:
+        list: Faces required.
+
     """
     edges = []
     for edge, count in edge_count.items():
@@ -408,7 +411,7 @@ def close_up(edge_count, used_pivots):
         face = list(vertices)
         for pivot in used_pivots:  # = .keys()
             if pivot not in vertices:
-                if not check_inside(face=face, pivot=pivot)[0]:
+                if not check_inside(face, pivot)[0]:
                     # det(A) = -det (B) if two cols swap (odd and even)
                     face[-1], face[-2] = face[-2], face[-1]
                 break
@@ -424,19 +427,20 @@ def close_up(edge_count, used_pivots):
 
 
 def close_up_hull(hull, edge_count, used_pivots):
-    """
-    Description:
-        Second stage
-        add all remaining faces into the hull to form
-            a closed simplicial complex
-    Parameters:
-        hull:
-        edge_count:
-        used_pivots:
-    Return:
-        no_face_added:
-            <type>: int
-            Number of face added
+    """Close up the hull.
+
+    Second stage.
+    Add all remaining faces into the hull to form
+        a closed simplicial complex
+
+    Args:
+        hull (list): All faces of the hull.
+        edge_count (dict): [description]
+        used_pivots (set): [description]
+
+    Returns:
+        int: Number of face added
+
     """
     face_added = close_up(edge_count, used_pivots)
     if not face_added:
@@ -451,9 +455,10 @@ def close_up_hull(hull, edge_count, used_pivots):
 
 
 def sort_vertices(*args, **kwargs):
-    """
-    A wrapper of sorting functions
-    Using buitin sorted for now
+    """Call wrapped sorting function.
+
+    A wrapper of sorting function
+    Using buitin sorted() for now
 
     Args:
         same as the wrapped function
@@ -463,115 +468,111 @@ def sort_vertices(*args, **kwargs):
 
     Raises:
         same as the wrapped fucntion
+
     """
     return sorted(*args, **kwargs)
 
 
 def qsort_partition(data, target=1, lhs=0, rhs=None):
-    """
-    Description:
-        Find the smallest [target] values in the [data] using [comp] as __lt__
+    """Find the smallest [target] values in the [data] using [comp] as __lt__.
 
-    Complexity:
-        O(n)
+    Complexity: O(n)
 
-    Parameters:
-        data:
-            <type>: Dataset
-
-        target:
-            int
+    Args:
+        data (Vertices): A list of vertex in tuple type
+        target (int, optional): Defaults to 1.
             [terget] smallest values will be returned.
-            (default=1, smallest value will be returned in a list
-        lhs:
-            lowest index (default=0)
-        rhs:
-            highest index + 1 (default=len(data))
-        comp: # Currently unavailable
-            cumstomised function used for comparing
-            default=__builtin__.__lt__
+        lhs (int, optional): Defaults to 0. Lowest index
+        rhs (int, optional): Defaults to None. Highest index + 1
+        comp (func, Currently not supported): Defaults to __builtin__.__lt__.
+            Cumstomised function used for comparing
 
     Returns:
-        list which contains [target] shallow copies of Vertex
+        list: [target] shallow copies of Vertex
+
     """
-    lhs = lhs or 0
-    rhs = (rhs or len(data)) - 1
     # comp is Partially supported: only used in partitioning
     # but not in sorting return values
     # BUG: Work around instead for now
     # comp = (lambda x, y: x < y)
 
-    _data = set()
-    label = data[0]['label']
-    for element in data[lhs:rhs + 1]:
-        if element['label'] == label:
-            _data.add(element['coordinate'])
-    data = list(_data)
+    data = list(set(data))  # Remove repeated vertices
 
     # BUG: Work around instead for now
-    """
-    rhs = len(data) - 1  # Since [data] is updated
-    position = -1
 
-    while position != target:
-        if position < target:
-            lhs = position + 1
-        elif position > target:
-            rhs = position - 1
+    # lhs = lhs or 0
+    # rhs = len(data) - 1  # Since [data] is updated
+    # position = -1
 
-        pivot = data[rhs]
-        index = lhs
-        for i in range(lhs, rhs + 1):
-            if comp(data[i], pivot):
-                data[i], data[index] = data[index], data[i]
-                index += 1
-        data[rhs], data[index] = data[index], data[rhs]
-        position = index  # Return value
-    return (label, sort_vertices(data[:target]))
-    """
-    return (label, sort_vertices(data)[:target])
+    # while position != target:
+    #     if position < target:
+    #         lhs = position + 1
+    #     elif position > target:
+    #         rhs = position - 1
+
+    #     pivot = data[rhs]
+    #     index = lhs
+    #     for i in range(lhs, rhs + 1):
+    #         if comp(data[i], pivot):
+    #             data[i], data[index] = data[index], data[i]
+    #             index += 1
+    #     data[rhs], data[index] = data[index], data[rhs]
+    #     position = index  # Return value
+    # return sort_vertices(data[:target])
+
+    return sort_vertices(data)[:target]
 
 
-def initialize_hull(dataset, all_instances):
-    """
-    Description
-    Parameters:
-        dataset:
-            <type>: Vertices
+def initialize_hull(instances, impurities):
+    """Initialize the hull by obtain the first face of the hull.
+
+    face: a n-1-d structure
+
+    Args:
+        instances (Vertices): Instances with same label
+        impurities (Vertices): Instances with different label
+
     Returns:
-        label:
-        dimension:
-            int
-        face:
-            (Vertex, ...)
-        used_pivots:
+        tuple:
+            dimension (int): Dimension of the space, n
+            face (tuple): The face obtained
+                (Vertex, ...)
+            used_pivots (set): The set of used instances on the hull
+                set{Vertex}
+            edge_count (dict): Counting of how many times an edge is used
+                {edge (Vertices): times (int)}
+
     """
-    dimension = len(dataset[0]['coordinate'])
-    label, edge = qsort_partition(dataset, target=dimension - 1)
-    used_pivots = dict(zip(edge, [True] * len(edge)))
+    dimension = len(instances[0])
+    edge = qsort_partition(instances, target=dimension - 1)
+    used_pivots = set(edge)
     edge_count = collections.defaultdict(int)  # default = 0
     face = edge
     if len(edge) == dimension - 1:
         pivot, found = find_next_pivot(
-            dataset, [], edge, label, used_pivots, edge_count, all_instances)
+            instances, [], edge, used_pivots, edge_count, impurities)
         if found:
             face = form_face(edge, pivot)
-            used_pivots[pivot] = True
-    return (label, dimension, tuple(face), used_pivots, edge_count)
+            used_pivots.add(pivot)
+    return (dimension, tuple(face), used_pivots, edge_count)
 
 
 def queuing_face(face, _queue, edge_count):
-    """
-    Description
-    Parameters:
-        face:
-            <type>: Vertices
-        _queue:
-        edge_count:
-            edge_count:
-            <type>: dict
-                {edge: int}
-            Counting of the number of an edge is used
+    """Push all the possible edges (n-2-d structure) into the queue.
+
+    Edges are obtained by making combinations.
+
+    No edge will join the queue more than once.
+
+    Gurantee the order that the later one in the face
+        will be excluded first in combinations.
+
+    Args:
+        face (Vertices): A face made of many vertices (n-1)
+        _queue (Queue): Target queue which supports .push()
+        edge_count (dict): Counting of how many times an edge is used
+            {edge (Vertices): times (int)}
+
     """
     for i in range(len(face) - 1, -1, -1):
         sub_face = []
@@ -585,31 +586,29 @@ def queuing_face(face, _queue, edge_count):
         edge_count[sorted_edge] += 1
 
 
-def gift_wrapping(dataset, all_instances):
-    """
-    Description:
-    Parameters:
-        dataset:
+def gift_wrapping(instances, impurities):
+    """Use modified gift-wrapping method for convex hull building.
+
+    Two stages: Finding new vertex & Close-up
+
+    Args:
+        instances (Vertices): List of instances with same label
+        impurities (Vertices): List of instances with different label
+
     Returns:
-        <type>: dict
+        dict:
             {
-                "faces": all the faces,
-                    <type>: list
-                    [face]
-                "vertices": all the vertices
-                    <type>: dict
-                    {Vertex: True}
-                "dimension":
-                    <type>: int
-                    len(face)
-                "label":
-                    <type>: int
-                    label
+                "faces": All the faces,
+                    list: [face]
+                "vertices": All the vertices
+                    dict: {Vertex: True}
+                "dimension": Dimension of the hull
+                    int: len(face)
             }
-    Reference: https://www.cs.jhu.edu/~misha/Spring16/09.pdf
+
     """
-    label, dimension, face, used_pivots, edge_count = initialize_hull(
-        dataset, all_instances)
+    dimension, face, used_pivots, edge_count = initialize_hull(
+        instances, impurities)
     _queue = queue.LifoQueue()
     if len(face) == dimension:
         queuing_face(face, _queue, edge_count)
@@ -622,14 +621,14 @@ def gift_wrapping(dataset, all_instances):
     while not _queue.empty():
         edge = _queue.get()
         pivot, found = find_next_pivot(
-            dataset, hull, edge, label,
-            used_pivots, edge_count, all_instances)
+            instances, hull, edge,
+            used_pivots, edge_count, impurities)
         if not found:
             continue
 
         face = form_face(edge, pivot)
         vertices.append(pivot)
-        used_pivots[pivot] = True
+        used_pivots.add(pivot)
         hull.append(face)
         queuing_face(face, _queue, edge_count)
 
@@ -639,83 +638,136 @@ def gift_wrapping(dataset, all_instances):
     return {
         "faces": hull,
         "vertices": used_pivots,
-        "dimension": dimension,
-        "label": label}
+        "dimension": dimension}
+
+
+def map_generate_tuple(*args):
+    """Generate a tuple with the results from the func.
+
+    Used to assist dict(), map() to generate a dictionary.
+
+    Args:
+        *args (list): [0]:(
+            key (immutable): key of the generated dict,
+            func (function): function to be called,
+            arg (tuple): arguments for func)
+
+    Returns:
+        tuple: (key, func(*arg))
+
+    """
+    key, func, arg = args[0][0], args[0][1], args[0][2]
+    return (key, func(*arg))
 
 
 def clustering(dataset, logger):
-    """
-    Description:
-        Convex Hull Algorithm - modified
-        Base on Gift Wrapping
-        All hulls will be pure(only contains data points with same label)
+    """Calculate all convex hulls.
 
-    Parameters:
-        dataset:
+    All hulls will be pure(only contains data points with same label)
+
+    Args:
+        dataset (list]): All the instances in the space with label
             list of dict objects:
             [Point, ...]
-        logger:
+        logger (logger): logger for logging
 
     Returns:
-        clusters:
-            list of dict objects:
-            [{'vertices': [Vertex, ...],
-              'points': [Vertex, ...](vertices are excluded)
-              'size':
-                    <type>: int
+        dict: Clusters obtained separated by labels
+            label: clusters (list of dict objects)
+                [{
+                'vertices' (list): Instances on the hull
+                    [Vertex, ...],
+                'points': Instances in the hull. Vertices are excluded
+                    [Vertex, ...]
+                'size' (int): Number of instances covered by the hull
                     len(['vertices']) + len(['points']),
-              'volume': float(optional)}, ...]
+                'volume': The volume of the hull
+                    float(optional)
+                }, ...]
+
     """
     clusters = []
     all_instances = dataset
-    while dataset:
+    meta_dataset = collections.defaultdict(list)
+    for instance in all_instances:
+        meta_dataset[instance['label']].append(instance['coordinate'])
+
+    tasklist = map(
+        lambda item, meta_dataset=meta_dataset, logger=logger: (
+            item[0],
+            clustering_by_label,
+            (item[1], item[0], meta_dataset, logger)), meta_dataset.items())
+
+    clusters = dict(map(map_generate_tuple, tasklist))
+
+    return clusters
+
+
+def clustering_by_label(instances, label, meta_dataset, logger):
+    """Obtain all possible clusters with given label.
+
+    Args:
+        instances (Vertices): all instances with given label
+        label (label): label
+        meta_dataset (meta_dataset): dict of the whole dataset
+        logger (logger): logger inherited
+
+    Returns:
+        list: list of all clusters obtained
+
+    """
+    clusters = []
+    impurities = {
+        item[0]: item[1]
+        for item in meta_dataset.items() if item[0] != label}
+    impurities = itertools.chain(*impurities.values())
+
+    while instances:
         # List is not empty
-        cluster = gift_wrapping(dataset, all_instances)
+        cluster = gift_wrapping(instances, impurities)
 
         found = cluster['dimension'] < len(cluster['vertices'])
         _dataset = []
         vertices = []
         points = []
-        for point in dataset:
-            if point['label'] != cluster['label']:
-                _dataset.append(point)
-                continue
-
-            vertex = point['coordinate']
+        for vertex in instances:
             if vertex in cluster['vertices']:
                 vertices.append(vertex)
             else:
                 if found and check_inside_hull(cluster['faces'], vertex):
                     points.append(vertex)
                 else:
-                    _dataset.append(point)
+                    _dataset.append(vertex)
 
         if found:
             volume = calculate_volume(cluster['faces'])
         else:
             volume = 0
 
-        dataset = _dataset
+        instances = _dataset
         clusters.append({'vertices': vertices,
                          'points': points,
                          'size': len(vertices) + len(points),
-                         'volume': volume,
-                         'label': cluster['label']})
-        if len(clusters) % 100 == 0:
+                         'volume': volume})
+        if len(clusters) % 5 == 0:
             logger.info(
-                'Clustering: %d clusters found, %d/%d instance processed',
-                len(clusters), len(all_instances) - len(dataset),
-                len(all_instances))
+                'Clustering: %d clusters found, '
+                '%d/%d instance processed for label %r',
+                len(clusters), len(meta_dataset[label]) - len(instances),
+                len(impurities) + len(meta_dataset[label]), label)
 
     return clusters
 
 
 def calculate_volume(hull):
-    """
-    Description:
-    Parameter:
-        hull:
-    Return:
+    """Calculate the volume of a convex hull.
+
+    Args:
+        hull (list): All faces in the hull.
+
+    Returns:
+        float: Volume calculated.
+
     """
     origin = hull[0][0]
     volume = 0.0
@@ -728,16 +780,14 @@ def calculate_volume(hull):
 
 
 def size_versus_number_of_clusters(clusters):
-    """
-    Description:
-    Parameter:
-        clusters
-    Return:
-        <type>: dict
-            {
-                size: quantity
-                    int: int
-            }
+    """Calculate the number of clusters respect to each size.
+
+    Args:
+        clusters (list): list of clusters
+
+    Returns:
+        dict: {size (int): quantity (int), ...}
+
     """
     stats = collections.defaultdict(int)  # default = 0
     for cluster in clusters:
@@ -747,16 +797,14 @@ def size_versus_number_of_clusters(clusters):
 
 
 def volume_versus_size(clusters):
-    """
-    Description:
-    Parameter:
-        clusters
-    Return:
-        <type>: dict
-            {
-                size: volume
-                    int: [float]
-            }
+    """Calculate volume of clusters respect to its size.
+
+    Args:
+        clusters (list): list of clusters
+
+    Returns:
+        dict: {size (int): volume (list of floats)}
+
     """
     stats = collections.defaultdict(list)
     for cluster in clusters:
@@ -766,14 +814,16 @@ def volume_versus_size(clusters):
 
 
 def centroid(clusters):
-    """The centroid of the vertices on the convex hulls
-        (i.e. exclude the inner instances)
+    """Calculate the centroid of the vertices on the convex hulls.
+
+    Inner instances are excluded.
 
     Args:
-        clusters
+        clusters (list): list of clusters
 
     Returns:
-        [vertex, ...]
+        list: [vertex, ...]
+
     """
     centroids = list(map(
         lambda cluster: tuple(map(
@@ -786,16 +836,16 @@ def centroid(clusters):
 
 
 def calculate_density(cluster):
-    """Density of a cluster
+    """Calculate Density of a cluster.
 
     density = size / volume
 
     Args:
-        cluster
+        clusters (list): list of clusters
 
     Returns:
-        density:
-            float
+        float: density
+
     """
     try:
         density = cluster['size'] / cluster['volume']
@@ -805,7 +855,7 @@ def calculate_density(cluster):
 
 
 def density_distribution(clusters, slots):
-    """Number of clusters in each density interval
+    """Calculate number of clusters in each density interval.
 
     [lb - 1 * interval, ... (slots - 1) * interval - hb]
     lb = lower bound
@@ -813,18 +863,17 @@ def density_distribution(clusters, slots):
     interval = range / slots = (hb - lb) / slots
 
     Args:
-        slots:
-            number of intervals
+        clusters (list): list of clusters
+        slots (int): number of intervals
 
     Returns:
-        interval:
-            <type>: <float>
+        float: interval
             range / slots
-        stats:
-            <type>: <dict>
+        dict: stats
             from lower bound to higher
             {inf: int, n-th slot: int, ...}
             [lb - 1 * interval, ... (slots - 1) * interval - hb]
+
     """
     raw_densities = list(map(calculate_density, clusters))
     densities = [
@@ -850,28 +899,25 @@ def density_distribution(clusters, slots):
 
 
 def label_versus_meta_features(clusters, func, *args, **kwargs):
-    """Calculate meta-features for clusters with each label
+    """Calculate meta-features for clusters with each label.
 
     Separate clusters based on label and call the funcitons
     Include a '_population' label which indicate the meta-feature over
         the population regardless of the label
 
     Args:
-        clusters:
-        func:
+        clusters (dict): list of clusters with ['label']
+        func (function):
             the function that used to calculate the meta-feature required
 
     Returns:
-        stats:
-            <type>: <dict>
-            {
-                label: corresponding meta-feature
-            }
+        dict: stats
+            {label (label): corresponding meta-feature, ...}
+
     """
     _clusters = collections.defaultdict(list)
-    _clusters['_population'] = clusters
-    for cluster in clusters:
-        _clusters[cluster['label']].append(cluster)
+    _clusters['_population'] = list(itertools.chain(*clusters.values()))
+    _clusters.update(clusters.items())
     stats = {}
     for label in _clusters:
         stats[label] = func(_clusters[label], *args, **kwargs)
@@ -879,28 +925,22 @@ def label_versus_meta_features(clusters, func, *args, **kwargs):
 
 
 def meta_features(clusters):
-    """Calculating all the meta-features defined using clusters calculated.
+    """Calculate all the meta-features defined using clusters calculated.
 
     Args:
-        clusters:
-            <type>: <list>
+        clusters (list): list of clusters
             [{
-                'vertices': vertices
-                    <type>: list
+                'vertices' (list): vertices
                     all the vertices on/defined the hull
-                'points': vertices
-                    <type>: list
+                'points' (list): vertices
                     all the instances that are in the hull
                     (same label as homogeniety is maintained)
-                'size': the number of instances belong to this hull
-                    <type>: int
+                'size' (int): the number of instances belong to this hull
                     len(vertices) + len(points)
-                'volume':
-                    <type>: float
+                'volume' (float):
                     the volume in the Euclidean n-dimensional space obtained
                     by the hull
-                'label':
-                    <type>: int
+                'label' (int):
                     the category that the hull belongs to
             }, ...]
 
@@ -919,7 +959,7 @@ def meta_features(clusters):
 
 
 def main(argv):
-    """main"""
+    """Start main function here."""
     dataset_filename = argv[0]
     clusters_filename = dataset_filename + ".clusters.json"
     output_filename = dataset_filename + ".output.json"
