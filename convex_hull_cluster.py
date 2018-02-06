@@ -154,7 +154,8 @@ def squared_area(vertices):
     dimension = len(vertices[0])
     matrix = numpy.matrix(
         numpy.stack(vertices[1:]) +
-        numpy.array(vertices[0]) * numpy.ones((dimension - 1, dimension)) * -1)
+        numpy.array(vertices[0]) *
+        numpy.ones((len(vertices) - 1, dimension)) * -1)
     logvolume = numpy.linalg.slogdet(matrix * matrix.T)[1]  # sign, logvolume
     return logvolume
 
