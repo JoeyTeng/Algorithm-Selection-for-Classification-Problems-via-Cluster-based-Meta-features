@@ -187,7 +187,7 @@ def check_inside(face, instance, edge=None, area=None):
     _face = form_face(edge, instance)
     _area = squared_area(_face)
     if ((numpy.isclose([numpy.exp(logvolume)], [0]) and _area > area)
-       or sign < 0):
+            or sign < 0):
         # outside
         return (False, _face, _area)
     return (True, _face, _area)
@@ -850,14 +850,29 @@ def size_versus_number_of_clusters(clusters):
         clusters (list): list of clusters
 
     Returns:
-        dict: {size (int): quantity (int), ...}
+        dict:
+            float: average
+            float: standard deviation
+            int: range
+            dict: stats
+                {size (int): quantity (int), ...}
 
     """
     stats = collections.defaultdict(int)  # default = 0
+    sizes = [cluster['size'] for cluster in clusters]
     for cluster in clusters:
         # initial quantity is 0
         stats[cluster['size']] += 1
-    return stats
+
+    average = numpy.average(sizes)
+    standard_deviation = numpy.std(sizes)
+    range_ = max(sizes) - min(sizes)
+
+    return {
+        'average': average,
+        'standard deviation': standard_deviation,
+        'range': range_,
+        'stats': stats}
 
 
 def volume_versus_size(clusters):
@@ -931,12 +946,19 @@ def density_distribution(clusters, slots):
         slots (int): number of intervals
 
     Returns:
-        float: interval
-            range / slots
-        dict: stats
-            from lower bound to higher
-            {inf: int, n-th slot: int, ...}
-            [lb - 1 * interval, ... (slots - 1) * interval - hb]
+        dict:
+            float: interval
+                range / slots
+            float: average
+                numpy.average
+            float: standard deviation
+                numpy.std
+            float: range
+                higherbound - lowerbound
+            dict: stats
+                from lower bound to higher
+                {inf: int, n-th slot: int, ...}
+                [lb - 1 * interval, ... (slots - 1) * interval - hb]
 
     """
     raw_densities = list(map(calculate_density, clusters))
@@ -947,6 +969,8 @@ def density_distribution(clusters, slots):
     stats = collections.defaultdict(int)
     stats[float('inf')] = len(list(raw_densities)) - len(densities)
     interval = None
+    lowerbound = float('inf')
+    higherbound = float('-inf')
     if densities:
         lowerbound = min(densities)
         higherbound = max(densities)
@@ -958,7 +982,15 @@ def density_distribution(clusters, slots):
         for density in densities:
             stats[int((density - lowerbound) / interval)] += 1
 
+    average = numpy.average(densities)
+    standard_deviation = numpy.std(densities)
+    range_ = higherbound - lowerbound
+
     return {'interval': interval,
+            'min': lowerbound,
+            'average': average,
+            'standard deviation': standard_deviation,
+            'range': range_,
             'stats': stats}
 
 
