@@ -25,12 +25,12 @@ meta_features = [[] for i in range(len(meta_names) + 2)]
 for metas_by_dataset in meta_features_by_dataset:
     for i in range(len(meta_names) - 1):
         meta_features[i * 2].append(
-            metas_by_dataset[meta_names[i]]['_population']['average'] /
-            metas_by_dataset[meta_names[i]]['_population']['range'])
+            metas_by_dataset[meta_names[i]]['_population']['average'])  # /
+        # metas_by_dataset[meta_names[i]]['_population']['range'])
         meta_features[i * 2 + 1].append(
             metas_by_dataset[meta_names[i]]
-            ['_population']['standard deviation'] /
-            metas_by_dataset[meta_names[i]]['_population']['range'])
+            ['_population']['standard deviation'])  # /
+        # metas_by_dataset[meta_names[i]]['_population']['range'])
     meta_features[-1].append(metas_by_dataset[meta_names[-1]]['_population'])
 
 

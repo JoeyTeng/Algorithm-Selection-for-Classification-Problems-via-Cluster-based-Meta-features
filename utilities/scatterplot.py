@@ -37,7 +37,7 @@ name_label = [
     "Standard Deviation of Density",
     meta_names[2]]
 
-fig1 = plt.figure(figsize=[18, 24])
+fig1 = plt.figure(figsize=[25, 25])
 fig1.clear()
 
 for i in range(len(meta_features)):
@@ -47,7 +47,7 @@ for i in range(len(meta_features)):
             namex = name_label[i]
             y = meta_features[j]
             namey = name_label[j]
-            sub = fig1.add_subplot(5, 3, i + 1)
+            sub = fig1.add_subplot(5, 5, i * 5 + j + 1)
             sub.scatter(x, y)  # , c="specs")
             sub.set_xlabel(namex)
             sub.set_ylabel(namey)
