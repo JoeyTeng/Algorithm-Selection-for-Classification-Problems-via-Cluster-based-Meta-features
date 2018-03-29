@@ -736,8 +736,8 @@ def clustering(dataset, logger):
                 [{
                 'vertices' (list): Turning instances on the hull
                     [Vertex, ...],
-                'points': Instances in the hull. Vertices are excluded
-                    [Vertex, ...]
+                'points' (list) : Instances in the hull. Vertices are excluded
+                    [Vertex, ...],
                 'size' (int): Number of instances covered by the hull
                     len(['vertices']) + len(['points']),
                 'volume': The volume of the hull
