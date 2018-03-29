@@ -725,7 +725,7 @@ def clustering(dataset, logger):
     All hulls will be pure(only contains data points with same label)
 
     Args:
-        dataset (list]): All the instances in the space with label
+        dataset (list): All the instances in the space with label
             list of dict objects:
             [Point, ...]
         logger (logger): logger for logging
