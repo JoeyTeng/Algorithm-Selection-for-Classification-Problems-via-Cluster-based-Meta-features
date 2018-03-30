@@ -62,7 +62,7 @@ def initialize_logger(filename=None, level=logging.DEBUG, filemode='w'):
     logger.addHandler(handler)
     logger.setLevel(level)
 
-    return logger
+    return logger, handler
 
 
 def load_dataset(filename):
@@ -281,7 +281,7 @@ def main(argv):
     output_filename = dataset_filename + ".output.json"
     log_file = dataset_filename + ".log"
 
-    logger = initialize_logger(log_file)
+    logger, handler = initialize_logger(log_file)
     logger.info('Start: Version 0.0.1')
     logger.debug('Logger initialized')
     logger.debug('sys.argv: %r', sys.argv)
@@ -316,6 +316,7 @@ def main(argv):
     logger.info('Meta-feature indicators calculated')
 
     logger.info('Completed')
+    logger.removeHandler(handler)
 
 
 if __name__ == '__main__':
