@@ -242,6 +242,8 @@ def clustering(dataset, logger):  # TODO
         clusters[instance['label']].append(
             initialize_cluster((instance['coordinate'], )))
 
+    logger.info('Merging clusters...')
+    logger_count = 0
     for label, homo_clusters in clusters.items():
         index = 0
         while index < len(homo_clusters):
@@ -256,7 +258,6 @@ def clustering(dataset, logger):  # TODO
                     distance = new_distance
 
             if merging_index == -1:
-                print(current['volume'])
                 index += 1
                 continue
 
@@ -270,6 +271,9 @@ def clustering(dataset, logger):  # TODO
                 homo_clusters[index] = current
             else:
                 index += 1
+        logger_count += 1
+        logger.info('{0}/{1} categories completed'.format(
+            logger_count, len(clusters.keys())))
 
     return clusters
 
