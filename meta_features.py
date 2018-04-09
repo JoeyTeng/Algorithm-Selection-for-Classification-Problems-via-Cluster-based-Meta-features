@@ -1,4 +1,3 @@
-
 # @Author: Joey Teng
 # @Email:  joey.teng.dev@gmail.com
 # @Filename: meta_features.py
@@ -65,27 +64,41 @@ def volume_versus_size(clusters):
     return stats
 
 
-def calculate_density(cluster):
-    """Calculate Density of a cluster.
-
-    density = size / volume
+def log_volume_versus_size(clusters):
+    """Calculate log-volume of clusters respect to its size.
 
     Args:
         clusters (list): list of clusters
 
     Returns:
-        float: density
+        dict: {size (int): log-volume (list of floats)}
 
     """
-    if numpy.isclose([cluster['volume']], [0]):
-        return float('inf')
+    stats = collections.defaultdict(list)
+    for cluster in clusters:
+        # initial container is empty
+        stats[cluster['size']].append(cluster['log-volume'])
+    return stats
 
-    density = cluster['size'] / cluster['volume']
-    return density
+
+def calculate_inverse_density(cluster):
+    """Calculate the inverse of Density of a cluster.
+
+    inverse of density = volume / size
+
+    Args:
+        clusters (list): list of clusters
+
+    Returns:
+        float: inverse of density
+
+    """
+    inverse_density = cluster['volume'] / cluster['size']
+    return inverse_density
 
 
-def density_distribution(clusters, slots):
-    """Calculate number of clusters in each density interval.
+def inverse_density_distribution(clusters, slots):
+    """Calculate number of clusters in each inverse of density interval.
 
     [lb - 1 * interval, ... (slots - 1) * interval - hb]
     lb = lower bound
@@ -112,29 +125,147 @@ def density_distribution(clusters, slots):
                 [lb - 1 * interval, ... (slots - 1) * interval - hb]
 
     """
-    raw_densities = list(map(calculate_density, clusters))
-    densities = [
-        density for density in raw_densities
-        if math.isfinite(density)]
+    inverse_densities = list(map(calculate_inverse_density, clusters))
 
     stats = collections.defaultdict(int)
-    stats[float('inf')] = len(list(raw_densities)) - len(densities)
     interval = None
     lowerbound = float('inf')
     higherbound = float('-inf')
-    if densities:
-        lowerbound = min(densities)
-        higherbound = max(densities)
+    if inverse_densities:
+        lowerbound = min(inverse_densities)
+        higherbound = max(inverse_densities)
         _range = higherbound - lowerbound
         interval = _range / slots
         if numpy.isclose([interval], [0]):
-            interval = lowerbound
+            interval = max(lowerbound, float(1))  # prevent ZeroDivisionError
 
-        for density in densities:
-            stats[int((density - lowerbound) / interval)] += 1
+        for inverse_density in inverse_densities:
+            try:
+                stats[int((inverse_density - lowerbound) / interval)] += 1
+            except ZeroDivisionError:
+                print("Densities: {}".format(inverse_densities))
+                print("Volumes: {}".format(
+                    list(map(lambda x: x['volume'], clusters))))
+                print("Size: {}".format(
+                    list(map(lambda x: x['size'], clusters))))
+                raise ZeroDivisionError(
+                    "({} - {}) / {}".format(
+                        inverse_density, lowerbound, interval))
+            except ValueError as message:
+                print("Densities: {}".format(inverse_densities))
+                print("Volumes: {}".format(
+                    list(map(lambda x: x['volume'], clusters))))
+                print("Size: {}".format(
+                    list(map(lambda x: x['size'], clusters))))
+                raise ValueError(
+                    "({} - {}) / {}\n{}".format(
+                        inverse_density, lowerbound, interval, message))
 
-    average = numpy.average(densities)
-    standard_deviation = numpy.std(densities)
+    average = numpy.average(inverse_densities)
+    standard_deviation = numpy.std(inverse_densities)
+    range_ = higherbound - lowerbound
+
+    return {'interval': interval,
+            'min': lowerbound,
+            'average': average,
+            'standard deviation': standard_deviation,
+            'range': range_,
+            'stats': stats}
+
+
+def calculate_inverse_log_density(cluster):
+    """Calculate the log of inverse of Density of a cluster.
+
+    inverse of density-log = log-volume - ln(size)
+
+    Args:
+        cluster ():
+
+    Returns:
+        float: inverse of density-log
+               -inf if log-volume = -inf
+
+    """
+    inverse_log_density = cluster['log-volume'] - math.log(cluster['size'])
+    return inverse_log_density
+
+
+def inverse_log_density_distribution(clusters, slots):
+    """Calculate number of clusters in each inverse of density interval.
+
+    inverse_log_density = log-volume - ln(size)
+
+    [lb - 1 * interval, ... (slots - 1) * interval - hb]
+    lb = lower bound
+    hb = higher bound
+    interval = range / slots = (hb - lb) / slots
+
+    Args:
+        clusters (list): list of clusters
+        slots (int): number of intervals
+
+    Returns:
+        dict:
+            float: interval
+                range / slots
+            float: average
+                numpy.average
+            float: standard deviation
+                numpy.std
+            float: range
+                higherbound - lowerbound
+            dict: stats
+                from lower bound to higher
+                {inf: int, n-th slot: int, ...}
+                [lb - 1 * interval, ... (slots - 1) * interval - hb]
+
+    """
+    raw_inverse_log_densities = list(
+        map(calculate_inverse_log_density, clusters))
+    inverse_log_densities = [
+        inverse_log_density
+        for inverse_log_density in raw_inverse_log_densities
+        if math.isfinite(inverse_log_density)]
+
+    stats = collections.defaultdict(int)
+    interval = None
+    lowerbound = float('inf')
+    higherbound = float('-inf')
+    if inverse_log_densities:
+        lowerbound = min(inverse_log_densities)
+        higherbound = max(inverse_log_densities)
+        _range = higherbound - lowerbound
+        interval = _range / slots
+        if numpy.isclose([interval], [0]):
+            interval = max(lowerbound, float(1))  # prevent ZeroDivisionError
+
+        for inverse_log_density in inverse_log_densities:
+            try:
+                stats[int((inverse_log_density - lowerbound) / interval)] += 1
+            except ZeroDivisionError:
+                print("Densities: {}".format(inverse_log_densities))
+                print("Volumes: {}".format(
+                    list(map(lambda x: x['volume'], clusters))))
+                print("Size: {}".format(
+                    list(map(lambda x: x['size'], clusters))))
+                raise ZeroDivisionError(
+                    "({} - {}) / {}".format(
+                        inverse_log_density, lowerbound, interval))
+            except ValueError as message:
+                print("Densities: {}".format(inverse_log_densities))
+                print("Volumes: {}".format(
+                    list(map(lambda x: x['volume'], clusters))))
+                print("Size: {}".format(
+                    list(map(lambda x: x['size'], clusters))))
+                raise ValueError(
+                    "({} - {}) / {}\n{}".format(
+                        inverse_log_density, lowerbound, interval, message))
+
+        # All spheres with -inf volume
+        stats[-1] = len(raw_inverse_log_densities) - len(inverse_log_densities)
+
+    average = numpy.average(inverse_log_densities)
+    standard_deviation = numpy.std(inverse_log_densities)
     range_ = higherbound - lowerbound
 
     return {'interval': interval,
@@ -197,7 +328,7 @@ def meta_features(clusters):  # TODO
                 'Number of Clusters' (int)
                 'Size versus Number of Clusters' ():
                 'Volume versus Size' ():
-                'Density distribution over 10 intervals' ():
+                'Inverse Density distribution over 10 intervals' ():
             }
 
     """
@@ -206,7 +337,13 @@ def meta_features(clusters):  # TODO
             'Size versus Number of Clusters':
                 label_versus_meta_features(
                     clusters, size_versus_number_of_clusters),
-            'Volume versus Size':
-                label_versus_meta_features(clusters, volume_versus_size),
-            'Density distribution over 10 intervals':
-                label_versus_meta_features(clusters, density_distribution, 10)}
+            # 'Volume versus Size':
+            #     label_versus_meta_features(clusters, volume_versus_size),
+                'log-Volume versus Size':
+                label_versus_meta_features(clusters, log_volume_versus_size),
+            # 'Inverse Density distribution over 10 intervals':
+            #     label_versus_meta_features(
+            #         clusters, inverse_density_distribution, 10)
+            'Inverse Log Density distribution over 10 intervals':
+                label_versus_meta_features(
+                    clusters, inverse_log_density_distribution, 10)}

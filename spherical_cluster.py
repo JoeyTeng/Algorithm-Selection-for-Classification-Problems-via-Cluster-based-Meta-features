@@ -25,10 +25,11 @@ import collections
 import json
 import logging
 import logging.handlers
+import math
 import sys
 
 import numpy
-import scipy.special
+# import scipy.special
 
 import meta_features
 
@@ -120,7 +121,8 @@ def initialize_cluster(coordinates):
         'radius': radius,
         'points': points,
         'size': len(points),
-        'volume': calculate_volume(len(centroid), radius)
+        # 'volume': calculate_volume(len(centroid), radius)
+        'log-volume': calculate_log_volume(len(centroid), radius)
     }
 
 
@@ -137,20 +139,46 @@ def calculate_distance(lhs, rhs):
     return numpy.linalg.norm((numpy.array(lhs) - numpy.array(rhs)))
 
 
-def calculate_volume(dimension, radius):
-    """Calculate the volume of a sphere with given dimension and radius.
+def calculate_log_volume(dimension, radius):
+    """Calculate the log-volume of a sphere with given dimension and radius.
 
     Args:
         dimension (int): dimension of the space
         radius (float): radius of the sphere
 
     Returns:
-        float: the volume of the sphere
+        float: the log-volume of the sphere
+               -inf if the radius is 0.
 
     """
-    return ((numpy.pi ** (dimension / 2.0))
-            / scipy.special.gamma(dimension/2.0 + 1)
-            * radius ** dimension)
+    if (numpy.isclose([radius], [0])):
+        return float('-inf')
+
+    try:
+        log_volume = ((dimension / 2.0) * math.log(math.pi) + dimension *
+                      math.log(radius) - math.lgamma(dimension / 2.0 + 1))
+    except ValueError as message:
+        raise ValueError(
+            "{0}\n".format(message) +
+            "(({0} / 2.0) * ln(pi) + ({0} * ln({1}) - ln(gamma({0} / 2.0 + 1)))".format(dimension, radius))
+    # ((578 / 2.0) * ln(pi) + (578 * ln(0.0) - ln(gamma(578 / 2.0 + 1)))
+    # volume = ((numpy.pi ** (dimension / 2.0))
+    #           / scipy.special.gamma(dimension / 2.0 + 1)
+    #           * radius ** dimension)
+    # try:
+    #     volume = math.e ** log_volume
+    # except OverflowError as message:
+    #     raise OverflowError("{0}\ne ^ {1}".format(message, log_volume))
+
+    # if math.isnan(volume):
+    if math.isnan(log_volume):
+        raise ValueError(
+            "Volume is NaN: pi ^ " +
+            "({0} / 2.0) / gamma({0} / 2.0 + 1) * {1} ^ {0}".format(
+                dimension, radius))
+
+    # return volume
+    return log_volume
 
 
 def float_less_or_equal(lhs, rhs, **kwargs):
@@ -168,6 +196,25 @@ def float_less_or_equal(lhs, rhs, **kwargs):
 
     """
     return numpy.isclose(lhs, rhs, **kwargs) or (lhs < rhs)
+
+
+def check_inside_cluster(cluster, point):
+    """Check if point is inside the cluster.
+
+    Args:
+        cluster (dict): cluster to be checked
+            {
+                'centroid' (Vertex): centroid of the cluster,
+                'radius' (float): radius of the cluster
+            }
+        point (Vertex): point to be checked
+
+    Returns:
+        bool: if the point is encompassed by the boundary
+
+    """
+    return float_less_or_equal(
+        calculate_distance(cluster['centroid'], point), cluster['radius'])
 
 
 def check_homogeneity(cluster, label, clusters):
@@ -286,7 +333,7 @@ def main(argv):
     log_file = dataset_filename + ".log"
 
     logger, handler = initialize_logger(log_file)
-    logger.info('Start: Version 0.0.1')
+    logger.info('Start: Version 1.0.1')
     logger.debug('Logger initialized')
     logger.debug('sys.argv: %r', sys.argv)
 
