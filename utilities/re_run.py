@@ -14,10 +14,12 @@ def main(paths):
     for path in paths:
         files.extend([
             '{0}/{1}'.format(path, file.strip().strip('/'))
-            for file in os.listdir(path) if file.find('.') == -1])
+            for file in os.listdir(path)
+            if (file.find('.json') == -1 and file.find('.log') == -1)])
+    files.sort()
 
     for file in files:
-        print(file)
+        print(file, flush=True)
         convex_hull_cluster.main([file])
 
 
