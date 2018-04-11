@@ -4,9 +4,18 @@
 # @Last modified by:   Joey Teng
 # @Last modified time: 09-Feb-2018
 
+import multiprocessing.pool
 import sys
 import os
 import spherical_cluster
+
+
+PROCESS_COUNT = int(os.cpu_count() / 2)
+
+
+def run_task(file):
+    print(file, flush=True)
+    spherical_cluster.main([file])
 
 
 def main(paths):
@@ -20,9 +29,10 @@ def main(paths):
                 and file.find('.DS_Store') == -1)])
     files.sort()
 
-    for file in files:
-        print(file)
-        spherical_cluster.main([file])
+    pool = multiprocessing.pool.Pool(PROCESS_COUNT)
+    list(pool.map(run_task, files))
+    pool.close()
+    pool.join()
 
 
 if __name__ == '__main__':
