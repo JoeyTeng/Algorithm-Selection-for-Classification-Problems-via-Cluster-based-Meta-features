@@ -12,9 +12,11 @@ import os
 import nose.tools
 
 import convex_hull_cluster
+import spherical_cluster
 
 
 STD_PATH = 'test/'
+cluster = spherical_cluster
 
 
 def get_path():
@@ -27,7 +29,7 @@ def get_path():
 def _test(path):
     with contextlib.suppress(FileNotFoundError):
         os.remove("{0}.clusters.json".format(path))
-    convex_hull_cluster.main([path])
+    cluster.main([path])
     nose.tools.assert_equal(
         json.load(open("{0}.clusters.json".format(path), 'r')),
         json.load(open("{0}.clusters.control.json".format(path))))
