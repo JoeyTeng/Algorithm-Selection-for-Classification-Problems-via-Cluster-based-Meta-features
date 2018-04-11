@@ -41,5 +41,5 @@ for filename in files:
                 ['_population']['range'], rel_tol)
     meta_features[-1] = metas_by_dataset[meta_names[-1]]['_population']
     np.save(
-        "{0}".format(filename.strip('.output.json')),
+        "{0}.output".format(filename[:-len('.output.json')]),
         np.array(meta_features))
