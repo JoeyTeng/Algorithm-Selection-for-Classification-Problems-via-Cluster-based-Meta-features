@@ -34,6 +34,9 @@ import numpy
 import meta_features
 
 
+INFINITESIMAL = 1e-323
+
+
 def initialize_logger(filename=None, level=logging.DEBUG, filemode='w'):
     """Initialize a logger in module logging.
 
@@ -148,11 +151,11 @@ def calculate_log_volume(dimension, radius):
 
     Returns:
         float: the log-volume of the sphere
-               -inf if the radius is 0.
+               radius is set as REL_TOL (1e-09)
 
     """
     if (numpy.isclose([radius], [0])):
-        return float('-inf')
+        radius = INFINITESIMAL
 
     try:
         log_volume = ((dimension / 2.0) * math.log(math.pi) + dimension *
@@ -333,7 +336,7 @@ def main(argv):
     log_file = dataset_filename + ".log"
 
     logger, handler = initialize_logger(log_file)
-    logger.info('Start: Version 1.0.1')
+    logger.info('Start: Version 2.0.1')
     logger.debug('Logger initialized')
     logger.debug('sys.argv: %r', sys.argv)
 
