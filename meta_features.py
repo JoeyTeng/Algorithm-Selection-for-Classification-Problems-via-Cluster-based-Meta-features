@@ -15,6 +15,9 @@ import math
 import numpy
 
 
+INFINITESIMAL = 1e-323
+
+
 def size_versus_number_of_clusters(clusters):
     """Calculate the number of clusters respect to each size.
 
@@ -129,14 +132,14 @@ def inverse_density_distribution(clusters, slots):
 
     stats = collections.defaultdict(int)
     interval = None
-    lowerbound = float('inf')
-    higherbound = float('-inf')
+    lowerbound = INFINITESIMAL
+    higherbound = INFINITESIMAL
     if inverse_densities:
         lowerbound = min(inverse_densities)
         higherbound = max(inverse_densities)
         _range = higherbound - lowerbound
         interval = _range / slots
-        if numpy.isclose([interval], [0]):
+        if math.isclose(interval, 0):
             interval = max(lowerbound, float(1))  # prevent ZeroDivisionError
 
         for inverse_density in inverse_densities:
@@ -229,14 +232,14 @@ def inverse_log_density_distribution(clusters, slots):
 
     stats = collections.defaultdict(int)
     interval = None
-    lowerbound = float('inf')
-    higherbound = float('-inf')
+    lowerbound = INFINITESIMAL
+    higherbound = INFINITESIMAL
     if inverse_log_densities:
         lowerbound = min(inverse_log_densities)
         higherbound = max(inverse_log_densities)
         _range = higherbound - lowerbound
         interval = _range / slots
-        if numpy.isclose([interval], [0]):
+        if math.isclose(interval, 0):
             interval = max(lowerbound, float(1))  # prevent ZeroDivisionError
 
         for inverse_log_density in inverse_log_densities:

@@ -154,7 +154,7 @@ def calculate_log_volume(dimension, radius):
                radius is set as REL_TOL (1e-09)
 
     """
-    if (numpy.isclose([radius], [0])):
+    if (math.isclose(radius, 0)):
         radius = INFINITESIMAL
 
     try:
