@@ -8,7 +8,7 @@ import argparse
 import collections
 import copy
 import json
-# import multiprocessing.pool
+import multiprocessing
 import os
 
 import numpy
@@ -21,22 +21,13 @@ PROCESS_COUNT = int(os.cpu_count() / 2)
 
 
 class GraphPlotter(type):
-    counter = 0
+    # lock = LOCK
+    # counter = COUNTER
     Threshold = 3
-    lock = False
     origins = 0
 
     def __call__(cls, path, _data):
-        while not cls.lock:
-            cls.lock = True
-        if cls.counter >= cls.Threshold:
-            input("Press enter to continue...")
-            cls.counter = 0
-
         cls.run(path, _data)
-
-        # cls.counter += 1
-        cls.lock = False
 
     @classmethod
     def run(cls, path, _data):
@@ -111,16 +102,17 @@ class GraphPlotter(type):
         ]
 
     @classmethod
-    def plot(cls, path, data, plot_type, **kwargs):
-        layout = dict(
-            title=cls.title_generation(path, **kwargs))
-        fig = plotly.graph_objs.Figure(data=data, layout=layout)
-        try:
-            plotly.plotly.image.save_as(
-                fig, filename="{}.{}.png".format(path, plot_type))
-        except KeyboardInterrupt:
-            raise KeyboardInterrupt
-        except BaseException:
+    def plot_offline(cls, fig, path, plot_type):
+        global LOCK
+        cls.lock = LOCK
+        global COUNTER
+        cls.counter = COUNTER
+
+        with cls.lock:
+            if cls.counter.value >= cls.Threshold:
+                input("Press enter to continue...")
+                cls.counter.value = 0
+
             plotly.offline.plot(
                 fig,
                 image="png",
@@ -130,7 +122,21 @@ class GraphPlotter(type):
 
             print("Offline Graph Plotted: {}.{}".format(
                 path, plot_type), flush=True)
-            cls.counter += 1  # Global Limits on Browser Sessions
+
+            cls.counter.value += 1  # Global Limits on Browser Sessions
+
+    @classmethod
+    def plot(cls, path, data, plot_type, **kwargs):
+        layout = dict(
+            title=cls.title_generation(path, **kwargs))
+        fig = plotly.graph_objs.Figure(data=data, layout=layout)
+        try:
+            plotly.plotly.image.save_as(
+                fig, filename="{}.{}.png".format(path, plot_type))
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
+        except plotly.exceptions.PlotlyRequestError:
+            cls.plot_offline(fig, path, plot_type)
 
     @classmethod
     def bar(cls, path, data, **kwargs):
@@ -278,11 +284,23 @@ def parse_path():
     return paths
 
 
+def init_shared(_lock, _counter):
+    global LOCK
+    LOCK = _lock
+    global COUNTER
+    COUNTER = _counter
+
+
 if __name__ == '__main__':
     paths = parse_path()
 
-    # pool = multiprocessing.pool.Pool(PROCESS_COUNT)
-    # list(pool.map(main, paths))
-    # pool.close()
-    # pool.join()
-    list(map(main, paths))
+    lock = multiprocessing.Lock()
+    Counter = multiprocessing.Value('L', 0)
+
+    pool = multiprocessing.Pool(
+        PROCESS_COUNT,
+        initializer=init_shared,
+        initargs=(lock, Counter))
+    list(pool.map(main, paths))
+    pool.close()
+    pool.join()
