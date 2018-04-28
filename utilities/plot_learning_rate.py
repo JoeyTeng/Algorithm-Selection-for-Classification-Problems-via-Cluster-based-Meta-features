@@ -35,11 +35,13 @@ class GraphPlotter(type):
 
         cls.run(path, _data)
 
-        cls.counter += 1
+        # cls.counter += 1
         cls.lock = False
 
     @classmethod
     def run(cls, path, _data):
+        print("Plotting graph of: {}".format(path), flush=True)
+
         _data['x'].extend([0] * cls.origins)
         _data['y'].extend([0] * cls.origins)
         _data['max'].extend([0] * cls.origins)
@@ -68,6 +70,8 @@ class GraphPlotter(type):
                  formula=formula, Pearsonr=pearsonr)
         cls.plot(path, [data[1], data[2]], "scatter",
                  formula=formula, Pearsonr=pearsonr)
+
+        print("Graph Plotted: {}".format(path), flush=True)
 
     @classmethod
     def title_generation(cls, path, **kwargs):
@@ -110,12 +114,23 @@ class GraphPlotter(type):
     def plot(cls, path, data, plot_type, **kwargs):
         layout = dict(
             title=cls.title_generation(path, **kwargs))
-        plotly.offline.plot(
-            plotly.graph_objs.Figure(data=data, layout=layout),
-            image="png",
-            image_filename="{}.{}.html".format(
-                path[path.rfind('/') + 1:], plot_type),
-            filename="{}.{}.html".format(path, plot_type))
+        fig = plotly.graph_objs.Figure(data=data, layout=layout)
+        try:
+            plotly.plotly.image.save_as(
+                fig, filename="{}.{}.png".format(path, plot_type))
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
+        except BaseException:
+            plotly.offline.plot(
+                fig,
+                image="png",
+                image_filename="{}.{}".format(
+                    path[path.rfind('/') + 1:], plot_type),
+                filename="{}.{}.html".format(path, plot_type))
+
+            print("Offline Graph Plotted: {}.{}".format(
+                path, plot_type), flush=True)
+            cls.counter += 1  # Global Limits on Browser Sessions
 
     @classmethod
     def bar(cls, path, data, **kwargs):
