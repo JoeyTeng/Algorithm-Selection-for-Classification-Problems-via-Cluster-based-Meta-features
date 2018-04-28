@@ -10,16 +10,32 @@ import copy
 import json
 import multiprocessing.pool
 import os
+import random
 
 import numpy
 import sklearn.ensemble
 import sklearn.tree
 
+NUMBER_OF_PERCENTAGES = 100
+NUMBER_OF_TRAINING_SETS = 10  # Folds
 PROCESS_COUNT = int(os.cpu_count() / 2)
 
 
 def split_data_target(dataset):
-    return [[float(element) for element in row.strip().split(',')[:-1]] for row in dataset], [float(row.strip().split(',')[-1]) for row in dataset]
+    try:
+        return [[float(element) for element in row.strip().split(',')[:-1]] for row in dataset], [float(row.strip().split(',')[-1]) for row in dataset]
+    except ValueError:
+        print("dataset {}".format(dataset))
+        raise ValueError
+
+
+def generate_training_sets(dataset, percentage, copies):
+    training_sets = []
+    for i in range(copies):
+        population = copy.deepcopy(dataset)
+        random.shuffle(population)
+        training_sets.append(population[:len(population) * percentage // 100])
+    return training_sets
 
 
 def generate_result(datasets, classifier, path):
@@ -27,22 +43,26 @@ def generate_result(datasets, classifier, path):
     for dataset in datasets:
         test_set = dataset['test set']
         result = collections.defaultdict(dict)
-        for key, value in dataset.items():
-            if (key == 'test set' or key == 'remainder'):
-                continue
-            if (key == '100'):
-                value = [value[0]]
+        for percentage in range(
+                100 // NUMBER_OF_PERCENTAGES,
+                100 + 100 // NUMBER_OF_PERCENTAGES,
+                100 // NUMBER_OF_PERCENTAGES):
+
+            if (percentage == 100):
+                value = [copy.deepcopy(dataset['remainder'])]
             else:
+                value = generate_training_sets(
+                    dataset['remainder'],
+                    percentage,
+                    NUMBER_OF_TRAINING_SETS)
                 try:
                     assert(sorted(value[0]) != sorted(value[1]))
                 except AssertionError:
                     print(
-                        "{} Warning: Repetition in training set with key {}".format(path, key))
+                        "{} Warning: Repetition in training set with key {}".format(path, percentage))
 
-            # print("DEBUG: Key {}, type {}".format(key, type(key)))
-
-            print("{} Running on {}%".format(path, key), flush=True)
-            result[key]['raw'] = []
+            print("{} Running on {}%".format(path, percentage), flush=True)
+            result[percentage]['raw'] = []
             for training_set in value:
                 clf = classifier()
                 data, target = split_data_target(training_set)
@@ -51,12 +71,14 @@ def generate_result(datasets, classifier, path):
                 # print("{} Debug: Size of training set {}".format(path, len(data)))
                 data, target = split_data_target(test_set)
                 accuracy = clf.score(data, target)
-                result[key]['raw'].append(accuracy)
+                result[percentage]['raw'].append(accuracy)
 
-            result[key]['average'] = numpy.average(result[key]['raw'])
-            result[key]['standard deviation'] = numpy.std(result[key]['raw'])
-            result[key]['range'] = max(
-                result[key]['raw']) - min(result[key]['raw'])
+            result[percentage]['average'] = numpy.average(
+                result[percentage]['raw'])
+            result[percentage]['standard deviation'] = numpy.std(
+                result[percentage]['raw'])
+            result[percentage]['range'] = max(
+                result[percentage]['raw']) - min(result[percentage]['raw'])
 
         results.append(result)
 
@@ -77,12 +99,12 @@ def main(path):
 
     datasets = json.load(open(path, 'r'))
     results = {}
-    print("{} Evaluating Random Forest".format(path), flush=True)
-    results['Random Forest'] = generate_result(
-        datasets, RandomForestClassifier, path)
     print("{} Evaluating Decision Tree".format(path), flush=True)
     results['Decision Tree'] = generate_result(
         datasets, DecisionTreeClassifier, path)
+    print("{} Evaluating Random Forest".format(path), flush=True)
+    results['Random Forest'] = generate_result(
+        datasets, RandomForestClassifier, path)
 
     json.dump(results, open(
         "{}.result.json".format(path[:-len('.json')]), 'w'))

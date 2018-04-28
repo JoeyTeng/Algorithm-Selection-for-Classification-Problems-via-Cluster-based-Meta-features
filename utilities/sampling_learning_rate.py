@@ -8,6 +8,7 @@ import argparse
 import collections
 import copy
 import json
+import multiprocessing.pool
 import os
 import random
 
@@ -15,6 +16,7 @@ import random
 NUMBER_OF_PERCENTAGES = 10
 NUMBER_OF_TEST_SETS = 10
 NUMBER_OF_TRAINING_SETS = 10
+PROCESS_COUNT = int(os.cpu_count() / 2)
 
 
 def load_dataset(filename):
@@ -41,22 +43,26 @@ def generate_training_sets(dataset, percentage, copies):
 
 def main(path):
     """main"""
+    print("{} Start".format(path), flush=True)
+
     dataset = load_dataset(path)
     datasets = []
     for i in range(NUMBER_OF_TEST_SETS):
         sets = collections.defaultdict(list)
         sets['test set'], sets['remainder'] = generate_test_set(dataset)
-        for percentage in range(
-                100 // NUMBER_OF_PERCENTAGES,
-                100 + 100 // NUMBER_OF_PERCENTAGES,
-                100 // NUMBER_OF_PERCENTAGES):
-            sets[percentage] = generate_training_sets(
-                sets['remainder'],
-                percentage,
-                NUMBER_OF_TRAINING_SETS)
+        # for percentage in range(
+        #         100 // NUMBER_OF_PERCENTAGES,
+        #         100 + 100 // NUMBER_OF_PERCENTAGES,
+        #         100 // NUMBER_OF_PERCENTAGES):
+        #     sets[percentage] = generate_training_sets(
+        #         sets['remainder'],
+        #         percentage,
+        #         NUMBER_OF_TRAINING_SETS)
         datasets.append(sets)
 
     json.dump(datasets, open("{}.learning_rate.json".format(path), 'w'))
+
+    print("{} Complete".format(path), flush=True)
 
 
 def traverse(paths):
@@ -97,7 +103,7 @@ def parse_path():
 if __name__ == '__main__':
     paths = parse_path()
 
-    for path in paths:
-        print("{} Start".format(path), flush=True)
-        main(path)
-        print("{} Complete".format(path), flush=True)
+    pool = multiprocessing.pool.Pool(PROCESS_COUNT)
+    list(pool.map(main, paths))
+    pool.close()
+    pool.join()
