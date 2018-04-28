@@ -33,6 +33,13 @@ class GraphPlotter(type):
             input("Press enter to continue...")
             cls.counter = 0
 
+        cls.run(path, _data)
+
+        cls.counter += 1
+        cls.lock = False
+
+    @classmethod
+    def run(cls, path, _data):
         _data['x'].extend([0] * cls.origins)
         _data['y'].extend([0] * cls.origins)
         _data['max'].extend([0] * cls.origins)
@@ -56,15 +63,23 @@ class GraphPlotter(type):
         y = _data['y']
 
         pearsonr = scipy.stats.pearsonr(y, pearsonr_y)
-        cls.scatter(path, data, formula, fit_x, fit_y, Pearsonr=pearsonr)
-        cls.bar(path, data, formula, fit_x, fit_y, Pearsonr=pearsonr)
-
-        cls.counter += 1
-        cls.lock = False
+        data = cls.plot_data_generation(data, fit_x, fit_y)
+        cls.plot(path, [data[0], data[2]], "error_bar",
+                 formula=formula, Pearsonr=pearsonr)
+        cls.plot(path, [data[1], data[2]], "scatter",
+                 formula=formula, Pearsonr=pearsonr)
 
     @classmethod
-    def bar(cls, path, _data, formula, fit_x, fit_y, **kwargs):
-        data = [
+    def title_generation(cls, path, **kwargs):
+        return "{}".format(
+            path[path.rfind('/') + 1:].replace(
+                '.learning_rate.result.json.', ' ') + "".join(
+                ["<br>{}: {}".format(key, value)
+                    for key, value in kwargs.items()]))
+
+    @classmethod
+    def plot_data_generation(cls, _data, fit_x, fit_y):
+        return [
             plotly.graph_objs.Scatter(
                 x=_data['x'],
                 y=_data['y'],
@@ -79,30 +94,6 @@ class GraphPlotter(type):
                 name='Average/Range of averages over 10 test sets'
             ),
             plotly.graph_objs.Scatter(
-                x=fit_x,
-                y=fit_y,
-                mode='lines',
-                name='BFL')
-        ]
-        layout = dict(
-            title="{}<br>{}".format(
-                path[path.rfind('/') + 1:].replace(
-                    '.learning_rate.result.json.', ' '),
-                formula) + "".join(
-                    ["<br>{}: {}".format(key, value)
-                     for key, value in kwargs.items()]))
-        fig = plotly.graph_objs.Figure(data=data, layout=layout)
-        plotly.offline.plot(
-            fig,
-            image="png",
-            image_filename="{}.error_bar.html".format(
-                path[path.rfind('/') + 1:]),
-            filename="{}.error_bar.html".format(path))
-
-    @classmethod
-    def scatter(cls, path, _data, formula, fit_x, fit_y, **kwargs):
-        data = [
-            plotly.graph_objs.Scatter(
                 x=_data['x'],
                 y=_data['y'],
                 mode='markers',
@@ -114,16 +105,35 @@ class GraphPlotter(type):
                 mode='lines',
                 name='BFL')
         ]
+
+    @classmethod
+    def plot(cls, path, data, plot_type, **kwargs):
         layout = dict(
-            title="{}<br>{}".format(
-                path[path.rfind('/') + 1:].replace(
-                    '.learning_rate.result.json.', ' '),
-                formula) + "".join(
-                    ["<br>{}: {}".format(key, value)
-                     for key, value in kwargs.items()]))
-        fig = plotly.graph_objs.Figure(data=data, layout=layout)
+            title=cls.title_generation(path, **kwargs))
         plotly.offline.plot(
-            fig,
+            plotly.graph_objs.Figure(data=data, layout=layout),
+            image="png",
+            image_filename="{}.{}.html".format(
+                path[path.rfind('/') + 1:], plot_type),
+            filename="{}.{}.html".format(path, plot_type))
+
+    @classmethod
+    def bar(cls, path, data, **kwargs):
+        layout = dict(
+            title=cls.title_generation(path, **kwargs))
+        plotly.offline.plot(
+            plotly.graph_objs.Figure(data=data, layout=layout),
+            image="png",
+            image_filename="{}.error_bar.html".format(
+                path[path.rfind('/') + 1:]),
+            filename="{}.error_bar.html".format(path))
+
+    @classmethod
+    def scatter(cls, path, data, **kwargs):
+        layout = dict(
+            title=cls.title_generation(path, **kwargs))
+        plotly.offline.plot(
+            plotly.graph_objs.Figure(data=data, layout=layout),
             image="png",
             image_filename="{}.scatter.html".format(
                 path[path.rfind('/') + 1:]),
@@ -137,8 +147,8 @@ class GraphPlotter(type):
     def exp_fit(cls, _x, _y):
         y = numpy.array(_y)
         x = numpy.array(_x)
-        a, b, c = scipy.optimize.curve_fit(cls.exponenial_func, _x, _y)[0]
-        __x = numpy.array(list(range(len(_x) * 2)))
+        a, b, c = scipy.optimize.curve_fit(cls.exponenial_func, x, y)[0]
+        __x = numpy.array(list(range(len(x) * 2)))
         __x = __x / (max(__x) - min(__x)) * (max(x) - min(x)) + min(x)
         __y = cls.exponenial_func(__x, a, b, c)
         predicted_y = cls.exponenial_func(x, a, b, c)
