@@ -23,7 +23,11 @@ PROCESS_COUNT = int(os.cpu_count() / 2)
 
 def split_data_target(dataset):
     try:
-        return [[float(element) for element in row.strip().split(',')[:-1]] for row in dataset], [float(row.strip().split(',')[-1]) for row in dataset]
+        return ([[float(element)
+                  for element in row.strip().split(',')[:-1]]
+                 for row in dataset],
+                [float(row.strip().split(',')[-1])
+                 for row in dataset])
     except ValueError:
         print("dataset {}".format(dataset))
         raise ValueError
@@ -55,11 +59,6 @@ def generate_result(datasets, classifier, path):
                     dataset['remainder'],
                     percentage,
                     NUMBER_OF_TRAINING_SETS)
-                try:
-                    assert(sorted(value[0]) != sorted(value[1]))
-                except AssertionError:
-                    print(
-                        "{} Warning: Repetition in training set with key {}".format(path, percentage))
 
             print("{} Running on {}%".format(path, percentage), flush=True)
             result[percentage]['raw'] = []
@@ -68,7 +67,6 @@ def generate_result(datasets, classifier, path):
                 data, target = split_data_target(training_set)
                 clf.fit(data, target)
 
-                # print("{} Debug: Size of training set {}".format(path, len(data)))
                 data, target = split_data_target(test_set)
                 accuracy = clf.score(data, target)
                 result[percentage]['raw'].append(accuracy)
