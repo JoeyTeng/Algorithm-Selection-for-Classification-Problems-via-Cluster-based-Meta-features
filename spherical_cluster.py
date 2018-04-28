@@ -257,7 +257,7 @@ def check_homogeneity(cluster, label, clusters):
     return True
 
 
-def clustering(dataset, logger):  # TODO
+def clustering(dataset, logger):
     """Calculate all spherical clusters.
 
     All spheres will be pure(only contains data points with same label)
