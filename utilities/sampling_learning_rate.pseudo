@@ -1,0 +1,14 @@
+# @Author: Joey Teng
+# @Email:  joey.teng.dev@gmail.com
+# @Filename: sampling_learning_rate.pseudo
+# @Last modified by:   Joey Teng
+# @Last modified time: 28-Apr-2018
+
+dataset = List_of_instances_with_label # Line 44
+for i in range(10): # Line 46
+    shuffled_dataset = shuffle(dataset) # Line 48 => 24-26
+    test_samples[i], remainder[i] = shuffled_dataset[:10%], shuffled_dataset[10%:] # Line 27-30
+
+    for percentage in range(10, 110, 10): # Line 49
+        for j in range(10): # 10 folds, Line 53-56 => Line 35
+            training_sample[i][percentage][j] = shuffle(remainder[i])[:percentage%] # Line 36-38
