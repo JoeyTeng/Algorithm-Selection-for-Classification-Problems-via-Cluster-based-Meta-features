@@ -14,6 +14,7 @@ import os
 import numpy
 import plotly
 import scipy.optimize
+import scipy.stats
 
 
 PROCESS_COUNT = int(os.cpu_count() / 2)
@@ -37,26 +38,32 @@ class GraphPlotter(type):
         _data['max'].extend([0] * cls.origins)
         _data['min'].extend([0] * cls.origins)
 
-        formula, fit_x, fit_y = cls.lsq_logistic_fit(_data['x'], _data['y'])
+        formula, fit_x, fit_y, predicted_y = cls.lsq_logistic_fit(
+            _data['x'], _data['y'])
         data = dict(
             x=_data['x'][:-cls.origins] or _data['x'],
             y=_data['y'][:-cls.origins] or _data['y'],
             max=_data['max'][:-cls.origins] or _data['max'],
             min=_data['min'][:-cls.origins] or _data['min'])
 
-        # data['y'] = cls.logistic_linearisation(data['y'])
-        # data['max'] = cls.logistic_linearisation(data['max'])
-        # data['min'] = cls.logistic_linearisation(data['min'])
-        # fit_y = cls.logistic_linearisation(fit_y)
+        data['y'] = cls.logistic_linearisation(data['y'])
+        data['max'] = cls.logistic_linearisation(data['max'])
+        data['min'] = cls.logistic_linearisation(data['min'])
+        fit_y = cls.logistic_linearisation(fit_y)
+        formula = cls.logistic_linearisation("formula")
 
-        cls.scatter(path, data, formula, fit_x, fit_y)
-        cls.bar(path, data, formula, fit_x, fit_y)
+        pearsonr_y = predicted_y
+        y = _data['y']
+
+        pearsonr = scipy.stats.pearsonr(y, pearsonr_y)
+        cls.scatter(path, data, formula, fit_x, fit_y, Pearsonr=pearsonr)
+        cls.bar(path, data, formula, fit_x, fit_y, Pearsonr=pearsonr)
 
         cls.counter += 1
         cls.lock = False
 
     @classmethod
-    def bar(cls, path, _data, formula, fit_x, fit_y):
+    def bar(cls, path, _data, formula, fit_x, fit_y, **kwargs):
         data = [
             plotly.graph_objs.Scatter(
                 x=_data['x'],
@@ -81,7 +88,9 @@ class GraphPlotter(type):
             title="{}<br>{}".format(
                 path[path.rfind('/') + 1:].replace(
                     '.learning_rate.result.json.', ' '),
-                formula))
+                formula) + "".join(
+                    ["<br>{}: {}".format(key, value)
+                     for key, value in kwargs.items()]))
         fig = plotly.graph_objs.Figure(data=data, layout=layout)
         plotly.offline.plot(
             fig,
@@ -91,7 +100,7 @@ class GraphPlotter(type):
             filename="{}.error_bar.html".format(path))
 
     @classmethod
-    def scatter(cls, path, _data, formula, fit_x, fit_y):
+    def scatter(cls, path, _data, formula, fit_x, fit_y, **kwargs):
         data = [
             plotly.graph_objs.Scatter(
                 x=_data['x'],
@@ -109,7 +118,9 @@ class GraphPlotter(type):
             title="{}<br>{}".format(
                 path[path.rfind('/') + 1:].replace(
                     '.learning_rate.result.json.', ' '),
-                formula))
+                formula) + "".join(
+                    ["<br>{}: {}".format(key, value)
+                     for key, value in kwargs.items()]))
         fig = plotly.graph_objs.Figure(data=data, layout=layout)
         plotly.offline.plot(
             fig,
@@ -124,57 +135,63 @@ class GraphPlotter(type):
 
     @classmethod
     def exp_fit(cls, _x, _y):
-        x = _x
-        y = _y
+        y = numpy.array(_y)
+        x = numpy.array(_x)
         a, b, c = scipy.optimize.curve_fit(cls.exponenial_func, _x, _y)[0]
         __x = numpy.array(list(range(len(_x) * 2)))
         __x = __x / (max(__x) - min(__x)) * (max(x) - min(x)) + min(x)
         __y = cls.exponenial_func(__x, a, b, c)
+        predicted_y = cls.exponenial_func(x, a, b, c)
 
         return "y = a * e^(b * x) + c<br> a = {}, b = {}, c = {}".format(
-            a, b, c), __x, __y
+            a, b, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
     @classmethod
     def lsq_exp_fit(cls, _x, _y):
         y = 1 - numpy.array(_y)
         y = numpy.log(y)
-        x = _x
+        x = numpy.array(_x)
         k, e = numpy.polyfit(x, y, 1)
         __x = numpy.array(list(range(len(_x) * 2)))
         __x = __x / (max(__x) - min(__x)) * (max(x) - min(x)) + min(x)
         __y = 1 - numpy.e ** (k * __x + e)
+        predicted_y = 1 - numpy.e ** (k * x + e)
 
         return "y = 1 - e^(ke + e)<br> k = {}, e = {}".format(
-            k, e), __x.tolist(), __y.tolist()
+            k, e), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
     @classmethod
     def lsq_ln_fit(cls, _x, _y):
         y = numpy.log(_y)
-        x = _x
+        x = numpy.array(_x)
         k, c = numpy.polyfit(x, y, 1)
         __x = numpy.array(list(range(len(_x) * 2)))
         __x = __x / (max(__x) - min(__x)) * (max(x) - min(x)) + min(x)
         __y = numpy.exp(k * __x + c)
+        predicted_y = numpy.exp(k * x + c)
 
         return "y = e^(kx + c)<br> k = {}, c = {}".format(
-            k, c), __x.tolist(), __y.tolist()
+            k, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
     @staticmethod
     def logistic_linearisation(y):
+        if y == 'formula':
+            return "ln(y^(-1) - 1) = kx + c"
         y = numpy.array(y)
         return numpy.log(y**(-1) - 1)
 
     @classmethod
     def lsq_logistic_fit(cls, _x, _y):
         y = cls.logistic_linearisation(_y)
-        x = _x
+        x = numpy.array(_x)
         k, c = numpy.polyfit(x, y, 1)
         __x = numpy.array(list(range(len(_x) * 2)))
         __x = __x / (max(__x) - min(__x)) * (max(x) - min(x)) + min(x)
         __y = 1 / (1 + numpy.exp(k * __x + c))
+        predicted_y = 1 / (1 + numpy.exp(k * x + c))
 
         return "y = 1 / (1 + e^(kx + c))<br> k = {}, c = {}".format(
-            k, c), __x.tolist(), __y.tolist()
+            k, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
 
 class PlotGraph(metaclass=GraphPlotter):
