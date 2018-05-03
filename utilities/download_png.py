@@ -17,7 +17,7 @@ DOWNLOAD_TIME = 1
 
 
 def to_del(downloader):
-    if not downloader.clean:
+    if downloader is not None and not downloader.clean:
         print("Preparing to destroy the driver in {}s...".format(
             WAIT_TIME), flush=True)
         time.sleep(WAIT_TIME)

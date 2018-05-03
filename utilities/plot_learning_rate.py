@@ -8,7 +8,7 @@ import argparse
 import collections
 import copy
 import json
-import multiprocessing.dummy
+import multiprocessing
 import time
 import os
 
@@ -121,28 +121,29 @@ class GraphPlotter(type):
                     flush=True)
                 time.sleep(SLEEP_TIME)
                 cls.counter.value = 0
+            cls.counter.value += 1  # Global Limits on Browser Sessions
 
             if not cls.downloader:
-                cls.downloader = download_png.Downloader()
+                global DOWNLOADER
+                cls.downloader = DOWNLOADER
+                DOWNLOADER = cls.downloader
                 if not cls.downloader.initialised:
                     cls.downloader.initialise(path[:path.rfind('/')])
                     print(cls.downloader.clean, flush=True)
 
-            filename = "{}.{}.html".format(path, plot_type)
-            url = plotly.offline.plot(
-                fig,
-                image="png",
-                image_filename="{}.{}".format(
-                    path[path.rfind('/') + 1:], plot_type),
-                filename=filename,
-                auto_open=False)
+        filename = "{}.{}.html".format(path, plot_type)
+        url = plotly.offline.plot(
+            fig,
+            image="png",
+            image_filename="{}.{}".format(
+                path[path.rfind('/') + 1:], plot_type),
+            filename=filename,
+            auto_open=False)
 
-            cls.downloader.download(url)
+        cls.downloader.download(url)
 
-            print("Offline Graph Plotted: {}.{}".format(
-                path, plot_type), flush=True)
-
-            cls.counter.value += 1  # Global Limits on Browser Sessions
+        print("Offline Graph Plotted: {}.{}".format(
+            path, plot_type), flush=True)
 
     @classmethod
     def plot(cls, path, data, plot_type, **kwargs):
@@ -266,9 +267,14 @@ def plot(name, data):
 
 def main(path):
     """main"""
+    global DOWNLOADER
+    DOWNLOADER = download_png.Downloader()
+
     results = json.load(open(path, 'r',))
     for key, value in results.items():
         plot("{}.{}".format(path, key.replace(' ', '_')), value)
+
+    download_png.to_del(DOWNLOADER)
 
 
 def traverse(paths):
@@ -304,20 +310,18 @@ def parse_path():
     return paths
 
 
-def init_shared(_lock, _counter, _downloader):
+def init_shared(_lock, _counter):
     global LOCK
     LOCK = _lock
     global COUNTER
     COUNTER = _counter
-    global DOWNLOADER
-    DOWNLOADER = _downloader
 
 
 def multiprocess(paths):
-    pool = multiprocessing.dummy.Pool(
+    pool = multiprocessing.Pool(
         PROCESS_COUNT,
         initializer=init_shared,
-        initargs=(lock, Counter, Downloader))
+        initargs=(lock, Counter))
     print("Mapping tasks...", flush=True)
     list(pool.map(main, paths))
     pool.close()
@@ -329,8 +333,6 @@ if __name__ == '__main__':
 
     lock = multiprocessing.Lock()
     Counter = multiprocessing.Value('L', 0)
-    Downloader = download_png.Downloader()
     multiprocess(paths)
 
     print("Program Ended", flush=True)
-    Downloader.on_del()
