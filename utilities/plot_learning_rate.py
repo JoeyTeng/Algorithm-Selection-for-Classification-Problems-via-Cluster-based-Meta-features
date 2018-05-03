@@ -8,7 +8,8 @@ import argparse
 import collections
 import copy
 import json
-import multiprocessing
+import multiprocessing.dummy
+import time
 import os
 
 import numpy
@@ -16,15 +17,19 @@ import plotly
 import scipy.optimize
 import scipy.stats
 
+import download_png
+
 
 PROCESS_COUNT = int(os.cpu_count() / 2)
+SLEEP_TIME = 4
 
 
 class GraphPlotter(type):
     # lock = LOCK
     # counter = COUNTER
-    Threshold = 3
+    Threshold = 4
     origins = 0
+    downloader = None
 
     def __call__(cls, path, _data):
         cls.run(path, _data)
@@ -110,15 +115,29 @@ class GraphPlotter(type):
 
         with cls.lock:
             if cls.counter.value >= cls.Threshold:
-                input("Press enter to continue...")
+                print(
+                    "Offline Tasks Exceed Threshold, Pause for {}s".format(
+                        SLEEP_TIME),
+                    flush=True)
+                time.sleep(SLEEP_TIME)
                 cls.counter.value = 0
 
-            plotly.offline.plot(
+            if not cls.downloader:
+                cls.downloader = download_png.Downloader()
+                if not cls.downloader.initialised:
+                    cls.downloader.initialise(path[:path.rfind('/')])
+                    print(cls.downloader.clean, flush=True)
+
+            filename = "{}.{}.html".format(path, plot_type)
+            url = plotly.offline.plot(
                 fig,
                 image="png",
                 image_filename="{}.{}".format(
                     path[path.rfind('/') + 1:], plot_type),
-                filename="{}.{}.html".format(path, plot_type))
+                filename=filename,
+                auto_open=False)
+
+            cls.downloader.download(url)
 
             print("Offline Graph Plotted: {}.{}".format(
                 path, plot_type), flush=True)
@@ -130,13 +149,14 @@ class GraphPlotter(type):
         layout = dict(
             title=cls.title_generation(path, **kwargs))
         fig = plotly.graph_objs.Figure(data=data, layout=layout)
-        try:
-            plotly.plotly.image.save_as(
-                fig, filename="{}.{}.png".format(path, plot_type))
-        except KeyboardInterrupt:
-            raise KeyboardInterrupt
-        except plotly.exceptions.PlotlyRequestError:
-            cls.plot_offline(fig, path, plot_type)
+        # try:
+        #     plotly.plotly.image.save_as(
+        #         fig, filename="{}.{}.png".format(path, plot_type))
+        # except KeyboardInterrupt:
+        #     raise KeyboardInterrupt
+        # except plotly.exceptions.PlotlyRequestError:
+        #     cls.plot_offline(fig, path, plot_type)
+        cls.plot_offline(fig, path, plot_type)
 
     @classmethod
     def bar(cls, path, data, **kwargs):
@@ -284,11 +304,24 @@ def parse_path():
     return paths
 
 
-def init_shared(_lock, _counter):
+def init_shared(_lock, _counter, _downloader):
     global LOCK
     LOCK = _lock
     global COUNTER
     COUNTER = _counter
+    global DOWNLOADER
+    DOWNLOADER = _downloader
+
+
+def multiprocess(paths):
+    pool = multiprocessing.dummy.Pool(
+        PROCESS_COUNT,
+        initializer=init_shared,
+        initargs=(lock, Counter, Downloader))
+    print("Mapping tasks...", flush=True)
+    list(pool.map(main, paths))
+    pool.close()
+    pool.join()
 
 
 if __name__ == '__main__':
@@ -296,11 +329,8 @@ if __name__ == '__main__':
 
     lock = multiprocessing.Lock()
     Counter = multiprocessing.Value('L', 0)
+    Downloader = download_png.Downloader()
+    multiprocess(paths)
 
-    pool = multiprocessing.Pool(
-        PROCESS_COUNT,
-        initializer=init_shared,
-        initargs=(lock, Counter))
-    list(pool.map(main, paths))
-    pool.close()
-    pool.join()
+    print("Program Ended", flush=True)
+    Downloader.on_del()
