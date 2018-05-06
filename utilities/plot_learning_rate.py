@@ -21,7 +21,7 @@ import download_png
 
 
 PROCESS_COUNT = int(os.cpu_count() / 2)
-SLEEP_TIME = 4
+SLEEP_TIME = 1
 
 
 class GraphPlotter(type):
@@ -109,12 +109,13 @@ class GraphPlotter(type):
 
     @classmethod
     def plot_offline(cls, fig, path, plot_type):
-        global LOCK
-        cls.lock = LOCK
+        # global LOCK
+        # cls.lock = LOCK
         global COUNTER
         cls.counter = COUNTER
 
-        with cls.lock:
+        # with cls.lock:
+        if True:
             if cls.counter.value >= cls.Threshold:
                 print(
                     "Offline Tasks Exceed Threshold, Pause for {}s".format(
@@ -124,7 +125,7 @@ class GraphPlotter(type):
                 cls.counter.value = 0
             cls.counter.value += 1  # Global Limits on Browser Sessions
 
-            if not cls.downloader:
+            if not cls.downloader or cls.downloader.clean:
                 global DOWNLOADER
                 cls.downloader = DOWNLOADER
                 DOWNLOADER = cls.downloader
@@ -141,7 +142,12 @@ class GraphPlotter(type):
             filename=filename,
             auto_open=False)
 
+        try:
         cls.downloader.download(url)
+        except RuntimeError:
+            print("RuntimeError occurs when downloading {}".format(url),
+                  flush=True)
+            return
 
         print("Offline Graph Plotted: {}.{}".format(
             path, plot_type), flush=True)
@@ -318,11 +324,12 @@ def init_shared(_lock, _counter):
     COUNTER = _counter
 
 
-def multiprocess(paths):
+def multiprocess(paths, initargs):
     pool = multiprocessing.Pool(
         PROCESS_COUNT,
         initializer=init_shared,
-        initargs=(lock, Counter))
+        initargs=initargs)
+    init_shared(*initargs)
     print("Mapping tasks...", flush=True)
     list(pool.map(main, paths))
     pool.close()
@@ -334,6 +341,6 @@ if __name__ == '__main__':
 
     lock = multiprocessing.Lock()
     Counter = multiprocessing.Value('L', 0)
-    multiprocess(paths)
+    multiprocess(paths, (lock, Counter))
 
     print("Program Ended", flush=True)
