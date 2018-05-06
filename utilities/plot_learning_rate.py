@@ -28,7 +28,7 @@ class GraphPlotter(type):
     downloader = None
 
     def __call__(cls, path, _data):
-        cls.run(path, _data)
+        return cls.run(path, _data)
 
     @classmethod
     def run(cls, path, _data):
@@ -39,7 +39,7 @@ class GraphPlotter(type):
         _data['max'].extend([0] * cls.origins)
         _data['min'].extend([0] * cls.origins)
 
-        formula, fit_x, fit_y, predicted_y = cls.lsq_logistic_fit(
+        coefficient, formula, fit_x, fit_y, predicted_y = cls.lsq_logistic_fit(
             _data['x'], _data['y'])
         data = dict(
             x=_data['x'][:-cls.origins] or _data['x'],
@@ -53,12 +53,30 @@ class GraphPlotter(type):
         pearsonr = scipy.stats.pearsonr(y, pearsonr_y)
         r_square = pearsonr[0] ** 2
         data = cls.plot_data_generation(data, fit_x, fit_y)
-        cls.plot(path, [data[0], data[2]], "error_bar",
-                 formula=formula, r_square=r_square)
-        cls.plot(path, [data[1], data[2]], "scatter",
-                 formula=formula, r_square=r_square)
+        layout = cls.layout_generation()
+        cls.plot(
+            path,
+            [data[1], data[2]],
+            "scatter-linear",
+            cls.layout(
+                path,
+                **layout['Linear'],
+                formula=formula,
+                r_square=r_square))
+        # cls.plot(
+        #     path,
+        #     [data[1], data[2]],
+        #     "scatter-logarithmic",
+        #     cls.layout(
+        #         path,
+        #         **layout['Logarithmic'],
+        #         formula=formula,
+        #         r_square=r_square))
 
         print("Graph Plotted: {}".format(path), flush=True)
+
+        return dict(coefficients=coefficient,
+                    r_square=r_square)
 
     @classmethod
     def title_generation(cls, path, **kwargs):
@@ -67,6 +85,31 @@ class GraphPlotter(type):
                 '.learning_rate.result.json.', ' ') + "".join(
                 ["<br>{}: {}".format(key, value)
                     for key, value in kwargs.items()]))
+
+    @classmethod
+    def layout_generation(cls):
+        return dict(
+            Linear=dict(
+                xaxis=dict(
+                    type='linear',
+                    range=[0, 100]
+                ),
+                yaxis=dict(
+                    type='linear',
+                    range=[0.8, 1]
+                )
+            ),
+            Logarithmic=dict(
+                xaxis=dict(
+                    type='linear',
+                    range=[0, 100]
+                ),
+                yaxis=dict(
+                    type='log',
+                    range=[-1, 0]
+                )
+            )
+        )
 
     @classmethod
     def plot_data_generation(cls, _data, fit_x, fit_y):
@@ -99,13 +142,13 @@ class GraphPlotter(type):
 
     @classmethod
     def plot_offline(cls, fig, path, plot_type):
-            if not cls.downloader or cls.downloader.clean:
-                global DOWNLOADER
-                cls.downloader = DOWNLOADER
-                DOWNLOADER = cls.downloader
-                if not cls.downloader.initialised:
-                    cls.downloader.initialise(path[:path.rfind('/')])
-                    print(cls.downloader.clean, flush=True)
+        if not cls.downloader or cls.downloader.clean:
+            global DOWNLOADER
+            cls.downloader = DOWNLOADER
+            DOWNLOADER = cls.downloader
+            if not cls.downloader.initialised:
+                cls.downloader.initialise(path[:path.rfind('/')])
+                print(cls.downloader.clean, flush=True)
 
         filename = "{}.{}.html".format(path, plot_type)
         url = plotly.offline.plot(
@@ -127,9 +170,16 @@ class GraphPlotter(type):
             path, plot_type), flush=True)
 
     @classmethod
-    def plot(cls, path, data, plot_type, **kwargs):
+    def layout(cls, path, xaxis=None, yaxis=None, **kwargs):
         layout = dict(
-            title=cls.title_generation(path, **kwargs))
+            title=cls.title_generation(path, **kwargs),
+            xaxis=xaxis,
+            yaxis=yaxis)
+
+        return layout
+
+    @classmethod
+    def plot(cls, path, data, plot_type, layout):
         fig = plotly.graph_objs.Figure(data=data, layout=layout)
         cls.plot_offline(fig, path, plot_type)
 
@@ -169,7 +219,7 @@ class GraphPlotter(type):
         __y = cls.exponenial_func(__x, a, b, c)
         predicted_y = cls.exponenial_func(x, a, b, c)
 
-        return "y = ({}) * e^(({}) * x) + ({})".format(
+        return (a, b, c), "y = ({}) * e^(({}) * x) + ({})".format(
             a, b, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
     @classmethod
@@ -183,7 +233,7 @@ class GraphPlotter(type):
         __y = 1 - numpy.e ** (k * __x + e)
         predicted_y = 1 - numpy.e ** (k * x + e)
 
-        return "y = 1 - e^(({})x + ({}))".format(
+        return (k, e), "y = 1 - e^(({})x + ({}))".format(
             k, e), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
     @classmethod
@@ -196,7 +246,7 @@ class GraphPlotter(type):
         __y = numpy.exp(k * __x + c)
         predicted_y = numpy.exp(k * x + c)
 
-        return "y = e^(({})x + ({}))".format(
+        return (k, c), "y = e^(({})x + ({}))".format(
             k, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
     @staticmethod
@@ -216,7 +266,7 @@ class GraphPlotter(type):
         __y = 1 / (1 + numpy.exp(k * __x + c))
         predicted_y = 1 / (1 + numpy.exp(k * x + c))
 
-        return "y = 1 / (1 + e^(({})x + ({})))".format(
+        return (k, c), "y = 1 / (1 + e^(({})x + ({})))".format(
             k, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
 
@@ -236,7 +286,8 @@ def plot(name, data):
         _data['y'].append(numpy.average(raw))
         _data['max'].append(max(raw))
         _data['min'].append(min(raw))
-    PlotGraph(name, _data)
+
+    return PlotGraph(name, _data)
 
 
 def main(path):
@@ -244,11 +295,16 @@ def main(path):
     global DOWNLOADER
     DOWNLOADER = download_png.Downloader()
 
+    printing_data = {}
     results = json.load(open(path, 'r',))
     for key, value in results.items():
-        plot("{}.{}".format(path, key.replace(' ', '_')), value)
+        printing_data[key] = plot("{}.{}".format(
+            path, key.replace(' ', '_')), value)
 
     download_png.to_del(DOWNLOADER)
+    return (path[path.rfind('/') + 1:].replace(
+        '.learning_rate.result.json', ''),
+        printing_data)
 
 
 def traverse(paths):
@@ -288,9 +344,15 @@ def multiprocess(paths):
     pool = multiprocessing.Pool(
         PROCESS_COUNT)
     print("Mapping tasks...", flush=True)
-    list(pool.map(main, paths))
+    printing_data = pool.map(main, paths)
     pool.close()
     pool.join()
+
+    path = "{}/_values.json".format(paths[0][:paths[0].rfind('/')])
+    print("Dumping results into {}...".format(path), flush=True)
+    print(printing_data, flush=True)
+    with open(path, 'w') as f:
+        json.dump(printing_data, f)
 
 
 if __name__ == '__main__':
