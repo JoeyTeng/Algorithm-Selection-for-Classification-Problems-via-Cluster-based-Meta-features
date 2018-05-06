@@ -13,7 +13,7 @@ from selenium.webdriver.common.keys import Keys
 FIREFOX_BINARY = ''.join([
     '/Applications/Firefox Developer Edition.app/Contents/MacOS/firefox-bin'])
 WAIT_TIME = 10
-DOWNLOAD_TIME = 1
+DOWNLOAD_TIME = 2
 
 
 def to_del(downloader):
@@ -54,16 +54,24 @@ class Downloader(object):
 
         self.initialised = True
         self.clean = False
-        print("Headless Firefox Downloader Initialised", flush=True)
+        print("Headless Firefox Downloader Initialised. Path: {}".format(
+            path), flush=True)
 
     def download(self, url):
-        print("Loading...", flush=True)
-        self.driver.get(url)
-        print("Page Loaded. Downloading...", flush=True)
+        print("Loading {}...".format(url), flush=True)
+        try:
+            self.driver.get(url)
+        except ConnectionRefusedError:
+            print("Connection Refused: {}\n Skip...".format(url), flush=True)
+            raise RuntimeError("Connection Refused")
+
+        print("Page Loaded. Downloading {}...".format(url), flush=True)
         time.sleep(DOWNLOAD_TIME)
-        self.driver.find_element_by_tag_name(
-            'body').send_keys(Keys.COMMAND + 'w')
-        print("Downloaded", flush=True)
+        # self.driver.find_element_by_tag_name(
+        #     'body').send_keys(Keys.COMMAND + 'w')
+        # self.driver.switch_to.window(self.driver.window_handles[0])
+        # self.driver.close()
+        print("Downloaded {}".format(url), flush=True)
 
     def on_del(self):
         if not self.clean:
