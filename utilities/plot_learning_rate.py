@@ -23,10 +23,10 @@ import download_png
 PROCESS_COUNT = int(os.cpu_count() / 2)
 
 
-class GraphPlotter(type):
+class PlotGraph(object):
     origins = 0
-    downloader = None
 
+    @classmethod
     def __call__(cls, path, _data):
         return cls.run(path, _data)
 
@@ -142,14 +142,6 @@ class GraphPlotter(type):
 
     @classmethod
     def plot_offline(cls, fig, path, plot_type):
-        if not cls.downloader or cls.downloader.clean:
-            global DOWNLOADER
-            cls.downloader = DOWNLOADER
-            DOWNLOADER = cls.downloader
-            if not cls.downloader.initialised:
-                cls.downloader.initialise(path[:path.rfind('/')])
-                print(cls.downloader.clean, flush=True)
-
         filename = "{}.{}.html".format(path, plot_type)
         url = plotly.offline.plot(
             fig,
@@ -159,8 +151,9 @@ class GraphPlotter(type):
             filename=filename,
             auto_open=False)
 
+        destination = path[:path.rfind('/')]
         try:
-            cls.downloader.download(url)
+            download_png.download(destination, url)
         except RuntimeError:
             print("RuntimeError occurs when downloading {}".format(url),
                   flush=True)
@@ -270,10 +263,6 @@ class GraphPlotter(type):
             k, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
 
-class PlotGraph(metaclass=GraphPlotter):
-    pass
-
-
 def plot(name, data):
     _data = collections.defaultdict(list)
     for key in data[0].keys():
@@ -287,13 +276,11 @@ def plot(name, data):
         _data['max'].append(max(raw))
         _data['min'].append(min(raw))
 
-    return PlotGraph(name, _data)
+    return PlotGraph()(name, _data)
 
 
 def main(path):
     """main"""
-    global DOWNLOADER
-    DOWNLOADER = download_png.Downloader()
 
     printing_data = {}
     results = json.load(open(path, 'r',))
@@ -301,7 +288,6 @@ def main(path):
         printing_data[key] = plot("{}.{}".format(
             path, key.replace(' ', '_')), value)
 
-    download_png.to_del(DOWNLOADER)
     return (path[path.rfind('/') + 1:].replace(
         '.learning_rate.result.json', ''),
         printing_data)
