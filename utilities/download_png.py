@@ -12,7 +12,7 @@ from selenium.webdriver.common.keys import Keys
 
 FIREFOX_BINARY = ''.join([
     '/Applications/Firefox Developer Edition.app/Contents/MacOS/firefox-bin'])
-WAIT_TIME = 10
+WAIT_TIME = 3
 DOWNLOAD_TIME = 2
 
 
