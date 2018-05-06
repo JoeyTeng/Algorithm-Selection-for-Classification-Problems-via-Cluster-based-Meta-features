@@ -51,11 +51,11 @@ class GraphPlotter(type):
             max=_data['max'][:-cls.origins] or _data['max'],
             min=_data['min'][:-cls.origins] or _data['min'])
 
-        data['y'] = cls.logistic_linearisation(data['y'])
-        data['max'] = cls.logistic_linearisation(data['max'])
-        data['min'] = cls.logistic_linearisation(data['min'])
-        fit_y = cls.logistic_linearisation(fit_y)
-        formula = cls.logistic_linearisation("formula")
+        # data['y'] = cls.logistic_linearisation(data['y'])
+        # data['max'] = cls.logistic_linearisation(data['max'])
+        # data['min'] = cls.logistic_linearisation(data['min'])
+        # fit_y = cls.logistic_linearisation(fit_y)
+        # formula = cls.logistic_linearisation("formula")
 
         pearsonr_y = predicted_y
         y = _data['y']
@@ -143,7 +143,7 @@ class GraphPlotter(type):
             auto_open=False)
 
         try:
-        cls.downloader.download(url)
+            cls.downloader.download(url)
         except RuntimeError:
             print("RuntimeError occurs when downloading {}".format(url),
                   flush=True)
@@ -202,7 +202,7 @@ class GraphPlotter(type):
         __y = cls.exponenial_func(__x, a, b, c)
         predicted_y = cls.exponenial_func(x, a, b, c)
 
-        return "y = a * e^(b * x) + c<br> a = {}, b = {}, c = {}".format(
+        return "y = ({}) * e^(({}) * x) + ({})".format(
             a, b, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
     @classmethod
@@ -216,7 +216,7 @@ class GraphPlotter(type):
         __y = 1 - numpy.e ** (k * __x + e)
         predicted_y = 1 - numpy.e ** (k * x + e)
 
-        return "y = 1 - e^(ke + e)<br> k = {}, e = {}".format(
+        return "y = 1 - e^(({})x + ({}))".format(
             k, e), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
     @classmethod
@@ -229,7 +229,7 @@ class GraphPlotter(type):
         __y = numpy.exp(k * __x + c)
         predicted_y = numpy.exp(k * x + c)
 
-        return "y = e^(kx + c)<br> k = {}, c = {}".format(
+        return "y = e^(({})x + ({}))".format(
             k, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
     @staticmethod
@@ -249,7 +249,7 @@ class GraphPlotter(type):
         __y = 1 / (1 + numpy.exp(k * __x + c))
         predicted_y = 1 / (1 + numpy.exp(k * x + c))
 
-        return "y = 1 / (1 + e^(kx + c))<br> k = {}, c = {}".format(
+        return "y = 1 / (1 + e^(({})x + ({})))".format(
             k, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
 
