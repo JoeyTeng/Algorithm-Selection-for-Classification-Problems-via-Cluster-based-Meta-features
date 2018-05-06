@@ -61,11 +61,12 @@ class GraphPlotter(type):
         y = _data['y']
 
         pearsonr = scipy.stats.pearsonr(y, pearsonr_y)
+        r_square = pearsonr[0] ** 2
         data = cls.plot_data_generation(data, fit_x, fit_y)
         cls.plot(path, [data[0], data[2]], "error_bar",
-                 formula=formula, Pearsonr=pearsonr)
+                 formula=formula, r_square=r_square)
         cls.plot(path, [data[1], data[2]], "scatter",
-                 formula=formula, Pearsonr=pearsonr)
+                 formula=formula, r_square=r_square)
 
         print("Graph Plotted: {}".format(path), flush=True)
 
