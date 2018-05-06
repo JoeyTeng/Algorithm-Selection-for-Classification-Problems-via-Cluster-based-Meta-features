@@ -21,13 +21,9 @@ import download_png
 
 
 PROCESS_COUNT = int(os.cpu_count() / 2)
-SLEEP_TIME = 1
 
 
 class GraphPlotter(type):
-    # lock = LOCK
-    # counter = COUNTER
-    Threshold = 4
     origins = 0
     downloader = None
 
@@ -50,12 +46,6 @@ class GraphPlotter(type):
             y=_data['y'][:-cls.origins] or _data['y'],
             max=_data['max'][:-cls.origins] or _data['max'],
             min=_data['min'][:-cls.origins] or _data['min'])
-
-        # data['y'] = cls.logistic_linearisation(data['y'])
-        # data['max'] = cls.logistic_linearisation(data['max'])
-        # data['min'] = cls.logistic_linearisation(data['min'])
-        # fit_y = cls.logistic_linearisation(fit_y)
-        # formula = cls.logistic_linearisation("formula")
 
         pearsonr_y = predicted_y
         y = _data['y']
@@ -109,22 +99,6 @@ class GraphPlotter(type):
 
     @classmethod
     def plot_offline(cls, fig, path, plot_type):
-        # global LOCK
-        # cls.lock = LOCK
-        global COUNTER
-        cls.counter = COUNTER
-
-        # with cls.lock:
-        if True:
-            if cls.counter.value >= cls.Threshold:
-                print(
-                    "Offline Tasks Exceed Threshold, Pause for {}s".format(
-                        SLEEP_TIME),
-                    flush=True)
-                time.sleep(SLEEP_TIME)
-                cls.counter.value = 0
-            cls.counter.value += 1  # Global Limits on Browser Sessions
-
             if not cls.downloader or cls.downloader.clean:
                 global DOWNLOADER
                 cls.downloader = DOWNLOADER
@@ -157,13 +131,6 @@ class GraphPlotter(type):
         layout = dict(
             title=cls.title_generation(path, **kwargs))
         fig = plotly.graph_objs.Figure(data=data, layout=layout)
-        # try:
-        #     plotly.plotly.image.save_as(
-        #         fig, filename="{}.{}.png".format(path, plot_type))
-        # except KeyboardInterrupt:
-        #     raise KeyboardInterrupt
-        # except plotly.exceptions.PlotlyRequestError:
-        #     cls.plot_offline(fig, path, plot_type)
         cls.plot_offline(fig, path, plot_type)
 
     @classmethod
@@ -317,19 +284,9 @@ def parse_path():
     return paths
 
 
-def init_shared(_lock, _counter):
-    global LOCK
-    LOCK = _lock
-    global COUNTER
-    COUNTER = _counter
-
-
-def multiprocess(paths, initargs):
+def multiprocess(paths):
     pool = multiprocessing.Pool(
-        PROCESS_COUNT,
-        initializer=init_shared,
-        initargs=initargs)
-    init_shared(*initargs)
+        PROCESS_COUNT)
     print("Mapping tasks...", flush=True)
     list(pool.map(main, paths))
     pool.close()
@@ -339,8 +296,6 @@ def multiprocess(paths, initargs):
 if __name__ == '__main__':
     paths = parse_path()
 
-    lock = multiprocessing.Lock()
-    Counter = multiprocessing.Value('L', 0)
-    multiprocess(paths, (lock, Counter))
+    multiprocess(paths)
 
     print("Program Ended", flush=True)
