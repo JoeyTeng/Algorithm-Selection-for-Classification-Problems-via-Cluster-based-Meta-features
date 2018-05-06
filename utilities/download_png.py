@@ -45,10 +45,20 @@ class Downloader(object):
             'browser.helperApps.neverAsk.saveToDisk',
             'image/png')
 
+        profile.set_preference(
+            "browser.preferences.defaultPerformanceSettings.enabled", False)
+        profile.set_preference(
+            "browser.shell.didSkipDefaultBrowserCheckOnFirstRun", False)
+        profile.set_preference("browser.shell.checkDefaultBrowser", False)
+        profile.set_preference("dom.ipc.processCount", 0)
+        profile.set_preference("dom.ipc.plugins.enabled", False)
+        profile.set_preference("browser.tabs.remote.autostart", False)
+
         self.driver = webdriver.Firefox(
             firefox_profile=profile,
             firefox_binary=FIREFOX_BINARY,
-            options=options)
+            options=options,
+            log_path='/dev/null')
 
         weakref.finalize(self, to_del, self)
 
@@ -70,7 +80,8 @@ class Downloader(object):
         # self.driver.find_element_by_tag_name(
         #     'body').send_keys(Keys.COMMAND + 'w')
         # self.driver.switch_to.window(self.driver.window_handles[0])
-        # self.driver.close()
+        self.driver.quit()
+        self.clean = True
         print("Downloaded {}".format(url), flush=True)
 
     def on_del(self):
