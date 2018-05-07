@@ -286,7 +286,9 @@ def traverse(paths):
 
 def parse_path():
     parser = argparse.ArgumentParser(
-        description="Plot graphs for learning rate & Best Fit Line.\n Use plotly & selenium with headless Firefox")
+        description="{}\n {}".format(
+            "Plot graphs for learning rate & Best Fit Line.",
+            "Use plotly & selenium with headless Firefox"))
     parser.add_argument('-r', action='store', nargs='+', default=[],
                         help='Recursively processing all files in the folder')
     parser.add_argument('-i', action='store', nargs='+', default=[],
