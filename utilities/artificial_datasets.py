@@ -120,6 +120,7 @@ def label(point, angles):
     angle = (y - 0.5)
     angles = numpy.tan(angles) * (x - 0.5)
     angles = angles.tolist()
+    angles.sort()
     count = bisect.bisect_left(angles, angle)
 
     if (count % 2):
