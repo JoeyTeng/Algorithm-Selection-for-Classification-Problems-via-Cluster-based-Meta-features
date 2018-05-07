@@ -98,11 +98,11 @@ class PlotGraph(object):
 
 def label(point, angles):
     x, y = point
-    angle = (y - 0.5)
-    angles = numpy.tan(angles) * (x - 0.5)
-    angles = angles.tolist()
-    angles.sort()
-    count = bisect.bisect_left(angles, angle)
+    point_y = (y - 0.5)
+    comparing_y = numpy.tan(angles) * (x - 0.5)
+    comparing_y = comparing_y.tolist()
+    comparing_y.sort()
+    count = bisect.bisect_left(comparing_y, point_y)
 
     if (count % 2):
         return 1
