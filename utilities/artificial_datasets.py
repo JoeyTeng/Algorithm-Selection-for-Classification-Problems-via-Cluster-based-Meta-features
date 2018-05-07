@@ -6,8 +6,10 @@
 
 import argparse
 import bisect
+import collections
 import itertools
 import json
+import os
 import random
 
 import numpy
@@ -20,46 +22,31 @@ POINTS = 30
 
 class PlotGraph(object):
     @classmethod
-    def __call__(cls, path, _data):
-        return cls.run(path, _data)
+    def __call__(cls, *args, **kwargs):
+        return cls.run(*args, **kwargs)
 
     @classmethod
     def run(cls, path, _data, _layout):
         print("Plotting graph of: {}".format(path), flush=True)
 
         data = cls.plot_data_generation(_data)
-        layout = cls.layout_generation()
+        layout = cls.layout(
+            "2-D Artificial Dataset",
+            **_layout)
         cls.plot(
             path,
-            [data[1], data[2]],
-            "scatter-linear",
-            cls.layout(
-                path,
-                **layout['Linear'],
-                **_layout))
+            data,
+            layout)
 
         print("Graph Plotted: {}".format(path), flush=True)
 
     @classmethod
     def title_generation(cls, title, **kwargs):
-        return "{}<br>{}".format(
+        return "{}{}".format(
             title,
             "".join(
                 ["<br>{}: {}".format(key, value)
                  for key, value in kwargs.items()]))
-
-    @classmethod
-    def layout_generation(cls):
-        return dict(
-            Linear=dict(
-                xaxis=dict(
-                    type='linear'
-                ),
-                yaxis=dict(
-                    type='linear'
-                )
-            )
-        )
 
     @classmethod
     def plot_data_generation(cls, _data):
@@ -79,13 +66,12 @@ class PlotGraph(object):
         ]
 
     @classmethod
-    def plot_offline(cls, fig, path, plot_type):
-        filename = "{}.{}.html".format(path, plot_type)
+    def plot_offline(cls, fig, path):
+        filename = "{}.html".format(path[:-len('.png')])
         url = plotly.offline.plot(
             fig,
             image="png",
-            image_filename="{}.{}".format(
-                path[path.rfind('/') + 1:], plot_type),
+            image_filename=path[path.rfind('/') + 1:-len('.png')],
             filename=filename,
             auto_open=False)
 
@@ -97,22 +83,19 @@ class PlotGraph(object):
                   flush=True)
             return
 
-        print("Offline Graph Plotted: {}.{}".format(
-            path, plot_type), flush=True)
+        print("Offline Graph Plotted: {}".format(path), flush=True)
 
     @classmethod
-    def layout(cls, title, xaxis=None, yaxis=None, **kwargs):
+    def layout(cls, title, **kwargs):
         layout = dict(
-            title=cls.title_generation(title, **kwargs),
-            xaxis=xaxis,
-            yaxis=yaxis)
+            title=cls.title_generation(title, **kwargs))
 
         return layout
 
     @classmethod
-    def plot(cls, path, data, plot_type, layout):
+    def plot(cls, path, data, layout):
         fig = plotly.graph_objs.Figure(data=data, layout=layout)
-        cls.plot_offline(fig, path, plot_type)
+        cls.plot_offline(fig, path)
 
 
 def label(point, angles):
@@ -156,7 +139,26 @@ def main(args):
 
 
 def plot(points, args):
-    pass
+    n = args.n  # number of linear separators
+    randomise = args.random
+    path = args.save_image_to
+    if (path.find('/') == -1):
+        path = '{}/{}'.format(os.getcwd(), path)
+
+    data = [collections.defaultdict(list),
+            collections.defaultdict(list)]
+    for point in points:
+        data[point[2]]['x'].append(point[0])
+        data[point[2]]['y'].append(point[1])
+
+    additional_info = dict(
+        number_of_separators=n,
+        randomised_angles=randomise,
+        number_of_points=len(points),
+        ratio_of_zero_to_all=len(data[0]) / len(points)
+    )
+
+    PlotGraph()(path, data, additional_info)
 
 
 def parse_args():
@@ -170,6 +172,9 @@ def parse_args():
                                       'angles (interval) for separators']))
     parser.add_argument('-o', action='store', type=str, default='data.out',
                         help='Path to where the generated dataset is stored')
+    parser.add_argument('--save_image_to', action='store', type=str,
+                        default="{}/data.png".format(os.getcwd()),
+                        help='Path to where the graph plotted is stored')
     return parser.parse_args()
 
 
