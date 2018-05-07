@@ -17,8 +17,6 @@ import plotly
 
 import download_png
 
-POINTS = 30
-
 
 class PlotGraph(object):
     @classmethod
@@ -115,17 +113,20 @@ def main(args):
     n = args.n  # number of linear separators
     randomise = args.random
     path = args.o
+    number_of_points = int((args.np) ** 0.5)
 
     if randomise:
-        angles = numpy.array([random.random() for i in range(n)]) * numpy.pi
-        angles = numpy.array(angles.tolist().sort())
+        angles = numpy.array([random.random() for i in range(n)])
+        angles = (angles - 0.5) * numpy.pi
+        angles = numpy.array(sorted(angles.tolist()))
     else:
-        angles = numpy.array(list(range(n))) / n * numpy.pi
+        angles = ((numpy.array(list(range(n))) / n) - 0.5) * numpy.pi
 
     points = [coordinate
-              for coordinate in itertools.product(range(POINTS), repeat=2)]
+              for coordinate in itertools.product(
+                  range(number_of_points), repeat=2)]
     points = numpy.array(points)
-    points = (points - 0) / (POINTS - 1 - 0)  # Normalization
+    points = (points - 0) / (number_of_points - 1 - 0)  # Normalization
     points = points.tolist()
 
     labeled_points = [(point[0], point[1], label(point, angles))
@@ -175,6 +176,9 @@ def parse_args():
     parser.add_argument('--save_image_to', action='store', type=str,
                         default="{}/data.png".format(os.getcwd()),
                         help='Path to where the graph plotted is stored')
+    parser.add_argument('-np', action='store', type=int,
+                        default=30,  # A random choice though
+                        help='The number of data instance you want')
     return parser.parse_args()
 
 
