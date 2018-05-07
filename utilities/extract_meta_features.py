@@ -91,7 +91,7 @@ def traverse(paths):
 
 def parse_path():
     parser = argparse.ArgumentParser(
-        description="Generate Datasets for Detecting Learning Rate")
+        description="Extract new meta-features from .clusters.json")
     parser.add_argument('-r', action='store', nargs='+', default=[],
                         help='Recursively processing all files in the folder')
     parser.add_argument('-i', action='store', nargs='+', default=[],

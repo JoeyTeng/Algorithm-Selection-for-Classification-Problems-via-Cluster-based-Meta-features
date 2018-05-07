@@ -9,7 +9,6 @@ import collections
 import copy
 import json
 import multiprocessing
-import time
 import os
 
 import numpy
@@ -91,12 +90,10 @@ class PlotGraph(object):
         return dict(
             Linear=dict(
                 xaxis=dict(
-                    type='linear',
-                    range=[0, 100]
+                    type='linear'
                 ),
                 yaxis=dict(
-                    type='linear',
-                    range=[0.8, 1]
+                    type='linear'
                 )
             ),
             Logarithmic=dict(
@@ -311,7 +308,7 @@ def traverse(paths):
 
 def parse_path():
     parser = argparse.ArgumentParser(
-        description="Generate Datasets for Detecting Learning Rate")
+        description="Plot graphs for learning rate & Best Fit Line.\n Use plotly & selenium with headless Firefox")
     parser.add_argument('-r', action='store', nargs='+', default=[],
                         help='Recursively processing all files in the folder')
     parser.add_argument('-i', action='store', nargs='+', default=[],
