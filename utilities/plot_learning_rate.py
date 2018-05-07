@@ -173,28 +173,6 @@ class PlotGraph(object):
         fig = plotly.graph_objs.Figure(data=data, layout=layout)
         cls.plot_offline(fig, path, plot_type)
 
-    @classmethod
-    def bar(cls, path, data, **kwargs):
-        layout = dict(
-            title=cls.title_generation(path, **kwargs))
-        plotly.offline.plot(
-            plotly.graph_objs.Figure(data=data, layout=layout),
-            image="png",
-            image_filename="{}.error_bar.html".format(
-                path[path.rfind('/') + 1:]),
-            filename="{}.error_bar.html".format(path))
-
-    @classmethod
-    def scatter(cls, path, data, **kwargs):
-        layout = dict(
-            title=cls.title_generation(path, **kwargs))
-        plotly.offline.plot(
-            plotly.graph_objs.Figure(data=data, layout=layout),
-            image="png",
-            image_filename="{}.scatter.html".format(
-                path[path.rfind('/') + 1:]),
-            filename="{}.scatter.html".format(path))
-
     @staticmethod
     def exponenial_func(x, a, b, c):
         return a * numpy.exp(-b * x) + c
