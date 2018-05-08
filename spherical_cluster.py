@@ -29,7 +29,6 @@ import math
 import sys
 
 import numpy
-# import scipy.special
 
 import meta_features
 
@@ -124,7 +123,6 @@ def initialize_cluster(coordinates):
         'radius': radius,
         'points': points,
         'size': len(points),
-        # 'volume': calculate_volume(len(centroid), radius)
         'log-volume': calculate_log_volume(len(centroid), radius)
     }
 
@@ -164,23 +162,12 @@ def calculate_log_volume(dimension, radius):
         raise ValueError(
             "{0}\n".format(message) +
             "(({0} / 2.0) * ln(pi) + ({0} * ln({1}) - ln(gamma({0} / 2.0 + 1)))".format(dimension, radius))
-    # ((578 / 2.0) * ln(pi) + (578 * ln(0.0) - ln(gamma(578 / 2.0 + 1)))
-    # volume = ((numpy.pi ** (dimension / 2.0))
-    #           / scipy.special.gamma(dimension / 2.0 + 1)
-    #           * radius ** dimension)
-    # try:
-    #     volume = math.e ** log_volume
-    # except OverflowError as message:
-    #     raise OverflowError("{0}\ne ^ {1}".format(message, log_volume))
-
-    # if math.isnan(volume):
     if math.isnan(log_volume):
         raise ValueError(
             "Volume is NaN: pi ^ " +
             "({0} / 2.0) / gamma({0} / 2.0 + 1) * {1} ^ {0}".format(
                 dimension, radius))
 
-    # return volume
     return log_volume
 
 
