@@ -21,12 +21,14 @@ Output files:
     dataset_filename.log: log file
 
 """
+import argparse
 import collections
 import json
 import logging
 import logging.handlers
 import math
-import sys
+import multiprocessing.pool
+import os
 
 import numpy
 
@@ -34,17 +36,23 @@ import meta_features
 
 
 INFINITESIMAL = 1e-323
+PROCESS_COUNT = int(os.cpu_count() / 2)
 
 
-def initialize_logger(filename=None, level=logging.DEBUG, filemode='w'):
+def initialize_logger(
+        name='LOG',
+        filename=None,
+        level=logging.DEBUG,
+        filemode='a'):
     """Initialize a logger in module logging.
 
     Args:
+        name (string, optional): Name of logger. Defaults to None.
         filename (string, optional): Defaults to None.
             The path of log file
             By default, logger will stream to the standard output
         level (logging level, optional): Defaults to logging.INFO
-        filemode (string, optional): Defaults to 'w'.
+        filemode (string, optional): Defaults to 'a'.
             'w' or 'a', overwrite or append
 
     Returns:
@@ -52,7 +60,7 @@ def initialize_logger(filename=None, level=logging.DEBUG, filemode='w'):
 
     """
     log_format = '%(asctime)s %(levelname)s\n' + \
-        '  %(filename)s:%(lineno)s: %(name)s %(message)s'
+        '  %(filename)s:%(lineno)s: %(name)s: %(message)s'
 
     if filename is None:
         handler = logging.StreamHandler()
@@ -61,7 +69,7 @@ def initialize_logger(filename=None, level=logging.DEBUG, filemode='w'):
             filename=filename, mode=filemode)
 
     handler.setFormatter(logging.Formatter(log_format))
-    logger = logging.getLogger('LOG')
+    logger = logging.getLogger(name)
     logger.addHandler(handler)
     logger.setLevel(level)
 
@@ -159,9 +167,10 @@ def calculate_log_volume(dimension, radius):
         log_volume = ((dimension / 2.0) * math.log(math.pi) + dimension *
                       math.log(radius) - math.lgamma(dimension / 2.0 + 1))
     except ValueError as message:
-        raise ValueError(
-            "{0}\n".format(message) +
-            "(({0} / 2.0) * ln(pi) + ({0} * ln({1}) - ln(gamma({0} / 2.0 + 1)))".format(dimension, radius))
+        raise ValueError("".join([
+            "{0}\n".format(message),
+            "(({0} / 2.0) * ln(pi) + ({0} * ln({1})".format(dimension, radius),
+            " - ln(gamma({0} / 2.0 + 1)))".format(dimension)]))
     if math.isnan(log_volume):
         raise ValueError(
             "Volume is NaN: pi ^ " +
@@ -315,50 +324,128 @@ def clustering(dataset, logger):
     return clusters
 
 
-def main(argv):
-    """Start main function here."""
-    dataset_filename = argv[0]
-    clusters_filename = dataset_filename + ".clusters.json"
-    output_filename = dataset_filename + ".output.json"
-    log_file = dataset_filename + ".log"
+def main(args):
+    """
+    Start main function here.
 
-    logger, handler = initialize_logger(log_file)
-    logger.info('Start: Version 2.0.1')
+    Dispatching all the tasks to process.
+    """
+    log_file = args.log
+
+    logger, handler = initialize_logger("Parent", log_file)
+    logger.info('Start: Version 2.1.1')
     logger.debug('Logger initialized')
-    logger.debug('sys.argv: %r', sys.argv)
-
-    logger.debug('Loading dataset')
-    dataset = load_dataset(dataset_filename)
-    logger.info('Dataset loaded')
-
-    logger.info('Trying to load clusters from %s', clusters_filename)
-    clusters = None
-    try:
-        clusters = json.load(open(clusters_filename, 'r'))
-    except FileNotFoundError:
-        logger.warning('Clusters data file not found')
-    except json.decoder.JSONDecodeError:
-        logger.warning('File broken. Not Json Decodable')
-
-    if not clusters:
-        logger.debug('Clustering data points')
-        clusters = clustering(dataset, logger)
-        logger.debug(
-            'Dumping clusters data into json file: %s', clusters_filename)
-        json.dump(clusters, open(clusters_filename, 'w'))
-        logger.info('Data points clustered')
-
-    logger.debug('Calculating meta-feature indicators')
-    features = meta_features.meta_features(clusters)
-    logger.debug(
-        'Dumping meta-feature indicators into json file: %s',
-        clusters_filename)
-    json.dump(features, open(output_filename, 'w'))
-    logger.info('Meta-feature indicators calculated')
-
-    logger.info('Completed')
+    logger.debug('argparse: %r', args)
     logger.removeHandler(handler)
+
+    _args = []
+    for dataset_filename in args.paths:
+        clusters_filename = dataset_filename + ".clusters.json"
+        output_filename = dataset_filename + ".output.json"
+
+        _args.append(tuple([
+            dataset_filename,
+            clusters_filename,
+            output_filename,
+            log_file]))
+
+    pool = multiprocessing.pool.Pool(PROCESS_COUNT)
+    list(pool.map(task_processing, _args))
+    pool.close()
+    pool.join()
+
+
+def task_processing(args):  # Take note here!!!
+    """Unwrap the args tuple to adapt a function with multiple args to map."""
+    def worker(
+            dataset_filename,
+            clusters_filename,
+            output_filename,
+            log_file):
+        """Link the submodules to process the data."""
+        logger, handler = initialize_logger(dataset_filename, log_file)
+        logger.debug('Logger initialized')
+
+        logger.debug('Loading dataset')
+        dataset = load_dataset(dataset_filename)
+        logger.info('Dataset loaded')
+
+        logger.info('Trying to load clusters from %s', clusters_filename)
+        clusters = None
+        try:
+            clusters = json.load(open(clusters_filename, 'r'))
+        except FileNotFoundError:
+            logger.warning('Clusters data file not found')
+        except json.decoder.JSONDecodeError:
+            logger.warning('File broken. Not Json Decodable')
+
+        if not clusters:
+            logger.debug('Clustering data points')
+            clusters = clustering(dataset, logger)
+            logger.debug(
+                'Dumping clusters data into json file: %s', clusters_filename)
+            json.dump(clusters, open(clusters_filename, 'w'))
+            logger.info('Data points clustered')
+
+        logger.debug('Calculating meta-feature indicators')
+        features = meta_features.meta_features(clusters)
+        logger.debug(
+            'Dumping meta-feature indicators into json file: %s',
+            clusters_filename)
+        json.dump(features, open(output_filename, 'w'))
+        logger.info('Meta-feature indicators calculated')
+
+        logger.info('Complete')
+
+        logger.removeHandler(handler)
+
+    return worker(*args)
+
+
+def traverse(paths):
+    """Traverse to collect all the data files."""
+    print("Starting Traverse Through", flush=True)
+    files = []
+    while paths:
+        path = paths[0]
+        paths = paths[1:]
+        for file in os.listdir(path):
+            if (file.find('.json') == -1
+                    and file.find('.log') == -1
+                    and file.find('.DS_Store') == -1):
+                files.append('{0}/{1}'.format(path, file))
+            elif os.path.isdir('{0}/{1}'.format(path, file)):
+                paths.append('{0}/{1}'.format(path, file))
+
+    print("Traverse Completed.", flush=True)
+    return files
+
+
+def parse_args():
+    """Parse all necessary args."""
+    parser = argparse.ArgumentParser(
+        description="Obtain clusters and calculate meta-features")
+    parser.add_argument('-r', action='store', nargs='+',
+                        default=[], metavar='Directory',
+                        help='Recursively processing all files in the folder')
+    parser.add_argument('-i', action='store', nargs='+',
+                        default=[], metavar='File',
+                        help='Files that need to be processed')
+    parser.add_argument('--log', action='store', type=str,
+                        default='spherical_cluster.log', metavar='Log file',
+                        help='Path to the log file')
+
+    args = parser.parse_args()
+    paths = []
+    if (args.r):
+        paths = traverse(args.r)
+    paths.extend(args.i)
+    paths.sort()
+    args.paths = paths
+
+    return args
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    args = parse_args()
+    main(args)
