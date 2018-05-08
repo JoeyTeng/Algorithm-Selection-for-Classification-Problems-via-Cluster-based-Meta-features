@@ -143,7 +143,7 @@ def plot(points, args):
     n = args.n  # number of linear separators
     randomise = args.random
     path = args.save_image_to
-    if (path.find('/') == -1):
+    if (not path.startswith('/')):  # Using relative path instead of absolute
         path = '{}/{}'.format(os.getcwd(), path)
 
     data = [collections.defaultdict(list),
