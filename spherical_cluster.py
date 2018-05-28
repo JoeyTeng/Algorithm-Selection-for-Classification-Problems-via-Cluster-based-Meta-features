@@ -412,7 +412,9 @@ def traverse(paths):
         for file in os.listdir(path):
             if (file.find('.json') == -1
                     and file.find('.log') == -1
-                    and file.find('.DS_Store') == -1):
+                    and file.find('.DS_Store') == -1
+                    and file.find('.png') == -1
+                    and file.find('.html') == -1):
                 files.append('{0}/{1}'.format(path, file))
             elif os.path.isdir('{0}/{1}'.format(path, file)):
                 paths.append('{0}/{1}'.format(path, file))
