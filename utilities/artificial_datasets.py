@@ -19,9 +19,10 @@ import download_png
 
 
 INCREMENT = dict(
-    corner=(0, 2),
+    # -x, -y, angle/, random-angle, -uniform-angle
+    corner=(0, 0, 2, 0, -0.5),
     side=(),
-    centre=(0.5, 1)
+    centre=(0.5, 0.5, 1, 0.5, 0.5)
 )
 
 
@@ -105,7 +106,7 @@ class PlotGraph(object):
 
 def label(point, angles, increment):
     x, y = point
-    point_y = (y - increment[0])
+    point_y = (y - increment[1])
     comparing_y = numpy.tan(angles) * (x - increment[0])
     comparing_y = comparing_y.tolist()
     comparing_y.sort()
@@ -125,11 +126,11 @@ def main(args):
 
     if randomise:
         angles = numpy.array([random.random() for i in range(n)])
-        angles = (angles) * numpy.pi / 2
+        angles = (angles - increment[3]) * numpy.pi / increment[2]
         angles = numpy.array(sorted(angles.tolist()))
     else:
         angles = ((numpy.array(list(range(n))) / n) -
-                  increment[0]) * numpy.pi / increment[1]
+                  increment[4]) * numpy.pi / increment[2]
 
     points = [coordinate
               for coordinate in itertools.product(
@@ -190,7 +191,7 @@ def parse_args():
     parser.add_argument('-np', action='store', type=int,
                         default=30,  # A random choice though
                         help='The number of data instance you want')
-    parser.add_argument('intersection', action='store', required=True,
+    parser.add_argument('intersection', action='store',
                         choices=['corner', 'side', 'centre'],
                         help='Point of intersection of separators')
     return parser.parse_args()
