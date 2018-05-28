@@ -135,7 +135,9 @@ def main(args):
     with open(path, 'w') as output:
         output.writelines(['{}, {}, {}\n'.format(*point)
                            for point in labeled_points])
-
+    json.dump(
+        (angles / numpy.pi).tolist(),
+        open("{}.angles.json".format(path), 'w'))
     return labeled_points
 
 
