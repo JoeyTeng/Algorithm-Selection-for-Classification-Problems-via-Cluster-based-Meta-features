@@ -18,6 +18,13 @@ import plotly
 import download_png
 
 
+INCREMENT = dict(
+    corner=(0, 2),
+    side=(),
+    centre=(0.5, 1)
+)
+
+
 class PlotGraph(object):
     @classmethod
     def __call__(cls, *args, **kwargs):
@@ -96,10 +103,10 @@ class PlotGraph(object):
         cls.plot_offline(fig, path)
 
 
-def label(point, angles):
+def label(point, angles, increment):
     x, y = point
-    point_y = (y - 0.5)
-    comparing_y = numpy.tan(angles) * (x - 0.5)
+    point_y = (y - increment[0])
+    comparing_y = numpy.tan(angles) * (x - increment[0])
     comparing_y = comparing_y.tolist()
     comparing_y.sort()
     count = bisect.bisect_left(comparing_y, point_y)
@@ -114,13 +121,15 @@ def main(args):
     randomise = args.random
     path = args.o
     number_of_points = int((args.np) ** 0.5)
+    increment = INCREMENT[args.intersection]
 
     if randomise:
         angles = numpy.array([random.random() for i in range(n)])
-        angles = (angles - 0.5) * numpy.pi
+        angles = (angles) * numpy.pi / 2
         angles = numpy.array(sorted(angles.tolist()))
     else:
-        angles = ((numpy.array(list(range(n))) / n) - 0.5) * numpy.pi
+        angles = ((numpy.array(list(range(n))) / n) -
+                  increment[0]) * numpy.pi / increment[1]
 
     points = [coordinate
               for coordinate in itertools.product(
@@ -129,7 +138,7 @@ def main(args):
     points = (points - 0) / (number_of_points - 1 - 0)  # Normalization
     points = points.tolist()
 
-    labeled_points = [(point[0], point[1], label(point, angles))
+    labeled_points = [(point[0], point[1], label(point, angles, increment))
                       for point in points]
 
     with open(path, 'w') as output:
@@ -181,6 +190,9 @@ def parse_args():
     parser.add_argument('-np', action='store', type=int,
                         default=30,  # A random choice though
                         help='The number of data instance you want')
+    parser.add_argument('intersection', action='store', required=True,
+                        choices=['corner', 'side', 'centre'],
+                        help='Point of intersection of separators')
     return parser.parse_args()
 
 
