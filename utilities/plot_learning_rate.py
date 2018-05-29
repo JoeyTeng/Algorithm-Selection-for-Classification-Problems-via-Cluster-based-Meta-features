@@ -312,6 +312,10 @@ def parse_path():
         paths = traverse(args.r)
     paths.extend(args.i)
     paths.sort()
+    for i in range(len(paths)):
+        # Using relative path instead of absolute
+        if not paths[i].startswith('/'):
+            paths[i] = '{}/{}'.format(os.getcwd(), paths[i])
 
     return paths
 
