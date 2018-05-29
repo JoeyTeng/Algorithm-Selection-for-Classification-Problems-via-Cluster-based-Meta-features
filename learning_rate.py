@@ -83,10 +83,6 @@ def generate_result(datasets, classifier, path):
     return results
 
 
-def DecisionTreeClassifier():
-    return sklearn.tree.DecisionTreeClassifier(min_impurity_split=1.0)
-
-
 def RandomForestClassifier():
     return sklearn.ensemble.RandomForestClassifier(n_estimators=64)
 
@@ -97,9 +93,6 @@ def main(path):
 
     datasets = json.load(open(path, 'r'))
     results = {}
-    print("{} Evaluating Decision Tree".format(path), flush=True)
-    results['Decision Tree'] = generate_result(
-        datasets, DecisionTreeClassifier, path)
     print("{} Evaluating Random Forest".format(path), flush=True)
     results['Random Forest'] = generate_result(
         datasets, RandomForestClassifier, path)
