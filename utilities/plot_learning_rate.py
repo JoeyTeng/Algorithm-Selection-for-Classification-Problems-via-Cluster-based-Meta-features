@@ -19,6 +19,8 @@ import scipy.stats
 import download_png
 
 
+INFINITESIMAL = 1e-323
+INFINITESIMAL_FOR_INVERSE = 1e-308
 PROCESS_COUNT = int(os.cpu_count() / 2)
 
 
@@ -221,8 +223,19 @@ class PlotGraph(object):
     def logistic_linearisation(y):
         if y == 'formula':
             return "ln(y^(-1) - 1) = kx + c"
+
         y = numpy.array(y)
-        return numpy.log(y**(-1) - 1)
+        for i in range(len(y)):
+            if numpy.isclose([y[i]], [0]):
+                y[i] += INFINITESIMAL_FOR_INVERSE
+
+        y = (y ** (-1)) - 1
+
+        for i in range(len(y)):
+            if numpy.isclose([y[i]], [0]):
+                y[i] += INFINITESIMAL
+
+        return numpy.log(y)
 
     @classmethod
     def lsq_logistic_fit(cls, _x, _y):
