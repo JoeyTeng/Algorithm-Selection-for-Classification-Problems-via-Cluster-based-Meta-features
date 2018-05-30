@@ -72,7 +72,8 @@ def traverse(paths):
         path = paths[0]
         paths = paths[1:]
         for file in os.listdir(path):
-            if (file.find('.json') == -1
+            if (file.endswith('.in')
+                and file.find('.json') == -1
                 and file.find('.log') == -1
                     and file.find('.DS_Store') == -1):
                 files.append('{0}/{1}'.format(path, file))
