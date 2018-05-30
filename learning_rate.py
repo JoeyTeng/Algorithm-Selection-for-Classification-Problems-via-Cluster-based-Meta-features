@@ -1,3 +1,8 @@
+"""Calculate data for learning rate calculation.
+
+Taking data from sampling_learning_rate.py
+Output may be processed by plot_learning_rate.py
+"""
 # @Author: Joey Teng
 # @Email:  joey.teng.dev@gmail.com
 # @Filename: learning_rate.py
@@ -22,6 +27,19 @@ PROCESS_COUNT = int(os.cpu_count() / 2)
 
 
 def split_data_target(dataset):
+    """Split the input CSV files into X, y vectors for sklearn implementations.
+
+    Args:
+        dataset (list): List of list of floats.
+            [
+                [0...n - 1]: X, feature vector
+                [-1]: y, label
+            ]
+
+    Returns:
+        tuple: (X, y) for sklearn implementations
+
+    """
     try:
         return ([[float(element)
                   for element in row.strip().split(',')[:-1]]
@@ -34,15 +52,59 @@ def split_data_target(dataset):
 
 
 def generate_training_sets(dataset, percentage, copies):
+    """Resample from separated training sets to generate smaller training sets.
+
+    No instance will present in one new training set more than once.
+    Mechanism is to shuffle, then pick the first percentage% instances.
+
+    Args:
+        dataset (list): List of vectors (features + label)
+        percentage (number that supports __mul__ and __floordiv__):
+            This decides the size of new training set generated related to the
+            population.
+        copies (int): The number of new training sets required.
+
+    Returns:
+        list: list of new training datasets
+            list of list of vectors
+
+    """
     training_sets = []
-    for i in range(copies):
+    i = copies
+    while i > 0:
         population = copy.deepcopy(dataset)
         random.shuffle(population)
         training_sets.append(population[:len(population) * percentage // 100])
+        i -= 1
+
     return training_sets
 
 
 def generate_result(datasets, classifier, path):
+    """Generate the learning rate accuracies.
+
+    Args:
+        datasets (dict): {
+            'test set': testing set for the specific dataset
+            'remainder': instances in the dataset but not testing set
+        }
+        classifier (func): a function that will return an instance of
+            sklearn classifier.
+        path (str): path of the dataset, for logging only.
+
+    Returns:
+        dict: dict of dict {
+            percentage: results under respective portion of training data {
+                'raw' (list): raw accuracy values [
+                    accuracy values of each training set-testing set pairs
+                ]
+                'average': average of 'raw'
+                'standard deviation': standard deviation of 'raw'
+                'range': range of 'raw'
+            }
+        }
+
+    """
     results = []
     for dataset in datasets:
         test_set = dataset['test set']
@@ -84,11 +146,15 @@ def generate_result(datasets, classifier, path):
 
 
 def RandomForestClassifier():
+    """Wrap a default Random Forest classifier with fixed parameter."""
     return sklearn.ensemble.RandomForestClassifier(n_estimators=64)
 
 
 def main(path):
-    """main"""
+    """Start main function here.
+
+    Run tasks and dump result files.
+    """
     print("{} Start".format(path), flush=True)
 
     datasets = json.load(open(path, 'r'))
@@ -103,6 +169,15 @@ def main(path):
 
 
 def traverse(paths):
+    """Travsere to append all files in children folders into the task queue.
+
+    Args:
+        paths (list): Paths of all folders to be detected
+
+    Returns:
+        list: Paths of all files added in the task queue
+
+    """
     print("Starting Traverse Through", flush=True)
     files = []
     while paths:
@@ -119,6 +194,14 @@ def traverse(paths):
 
 
 def parse_path():
+    """Parse the arguments.
+
+    No argument is required for calling this function.
+
+    Returns:
+        Namespace: parsed arguments enclosed by an object defined in argparse
+
+    """
     parser = argparse.ArgumentParser(
         description="Generate Datasets for Detecting Learning Rate")
     parser.add_argument('-r', action='store', nargs='+', default=[],
