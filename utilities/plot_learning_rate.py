@@ -64,15 +64,6 @@ class PlotGraph(object):
                 **layout['Linear'],
                 formula=formula,
                 r_square=r_square))
-        # cls.plot(
-        #     path,
-        #     [data[1], data[2]],
-        #     "scatter-logarithmic",
-        #     cls.layout(
-        #         path,
-        #         **layout['Logarithmic'],
-        #         formula=formula,
-        #         r_square=r_square))
 
         print("Graph Plotted: {}".format(path), flush=True)
 
