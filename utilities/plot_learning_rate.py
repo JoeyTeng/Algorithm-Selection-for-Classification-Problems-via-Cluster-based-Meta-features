@@ -67,8 +67,11 @@ class PlotGraph(object):
 
         print("Graph Plotted: {}".format(path), flush=True)
 
+        area = cls.trapezium_rule(_data['x'], _data['y'])
+
         return dict(coefficients=coefficient,
-                    r_square=r_square)
+                    r_square=r_square,
+                    area_inverse=(1 / area))
 
     @classmethod
     def title_generation(cls, path, **kwargs):
@@ -241,6 +244,20 @@ class PlotGraph(object):
         return (k, c), "y = 1 / (1 + e^(({})x + ({})))".format(
             k, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
+    @classmethod
+    def trapezium_rule(cls, _x, _y):
+        """Use trapezium rule to estimate the area under curve"""
+        # As x is percentage, use x / 100
+        data = [(_x[i] / 100, _y[i]) for i in range(len(_x))]
+        data.sort(key=lambda x: x[0])
+
+        area = 0
+        for i in range(len(data) - 1):
+            area += ((data[i][1] + data[i + 1][1]) *
+                     (data[i + 1][0] - data[i][0]) / 2)
+
+        return area
+
 
 def plot(name, data):
     _data = collections.defaultdict(list)
@@ -267,9 +284,10 @@ def main(path):
         printing_data[key] = plot("{}.{}".format(
             path, key.replace(' ', '_')), value)
 
-    return (path[path.rfind('/') + 1:].replace(
-        '.learning_rate.result.json', ''),
-        printing_data)
+    return {
+        'dataset': path[path.rfind('/') + 1:].replace(
+            '.learning_rate.result.json', ''),
+        'result': printing_data}
 
 
 def traverse(paths):
