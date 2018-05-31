@@ -45,7 +45,7 @@ def main(path):
         writer.writeheader()
         writer.writerows(data_csv)
         writer.writerow(dict([
-            (fieldnames[0], "r square of Inverse Area to Number of Separators"),
+            (fieldnames[0], 'r^2 of Inverse Area to Number of Separators'),
             (fieldnames[1], r_square)
         ]))
 
