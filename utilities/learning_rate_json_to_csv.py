@@ -3,11 +3,7 @@
 # @Filename: learning_rate_json_to_csv.py
 # @Last modified by:   Joey Teng
 # @Last modified time: 08-May-2018
-# @Author: Joey Teng
-# @Email:  joey.teng.dev@gmail.com
-# @Filename: json_to_csv.py
-# @Last modified by:   Joey Teng
-# @Last modified time: 09-Apr-2018
+
 
 import argparse
 import csv
