@@ -50,14 +50,6 @@ def main(path):
     for i in range(NUMBER_OF_TEST_SETS):
         sets = collections.defaultdict(list)
         sets['test set'], sets['remainder'] = generate_test_set(dataset)
-        # for percentage in range(
-        #         100 // NUMBER_OF_PERCENTAGES,
-        #         100 + 100 // NUMBER_OF_PERCENTAGES,
-        #         100 // NUMBER_OF_PERCENTAGES):
-        #     sets[percentage] = generate_training_sets(
-        #         sets['remainder'],
-        #         percentage,
-        #         NUMBER_OF_TRAINING_SETS)
         datasets.append(sets)
 
     json.dump(datasets, open("{}.learning_rate.json".format(path), 'w'))
