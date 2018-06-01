@@ -22,19 +22,27 @@ def main(path):
         data_csv = [row for row in reader]
 
     fieldnames.append('Number of Separators')
-    complexity_actual = []
+    complexity_coef = []
+    complexity_inv_a = []
     complexity_predicted = []
     for row in data_csv:
-        tmp = row['Dataset Name'][len('artificial.'):]
+        tmp = row['Dataset Name']
+        tmp = tmp.replace('artificial.', '')
         m = int(tmp[:tmp.find('.')])
 
-        complexity_actual.append(float(row['Area Inverse']))
+        complexity_coef.append(float(row['Coefficient']))
+        complexity_inv_a.append(float(row['Area Inverse']))
         complexity_predicted.append(m)
 
         row[fieldnames[-1]] = complexity_predicted[-1]
 
-    pearsonr = scipy.stats.pearsonr(complexity_actual, complexity_predicted)
-    r_square = pearsonr[0] ** 2
+    pearsonr_coef = scipy.stats.pearsonr(
+        complexity_coef, complexity_predicted)
+    r_square_coef = pearsonr_coef[0] ** 2
+
+    pearsonr_inv_a = scipy.stats.pearsonr(
+        complexity_inv_a, complexity_predicted)
+    r_square_inv_a = pearsonr_inv_a[0] ** 2
 
     data_csv.sort(key=lambda row: row[fieldnames[-1]])
     fieldnames[1], fieldnames[-1] = fieldnames[-1], fieldnames[1]
@@ -45,8 +53,10 @@ def main(path):
         writer.writeheader()
         writer.writerows(data_csv)
         writer.writerow(dict([
-            (fieldnames[0], 'r^2 of Inverse Area to Number of Separators'),
-            (fieldnames[1], r_square)
+            (fieldnames[0], 'r^2 of Coefficient to Number of Separators'),
+            (fieldnames[1], r_square_coef),
+            (fieldnames[2], 'r^2 of Inverse Area to Number of Separators'),
+            (fieldnames[3], r_square_inv_a)
         ]))
 
 
