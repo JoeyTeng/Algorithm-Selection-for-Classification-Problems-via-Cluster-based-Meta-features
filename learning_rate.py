@@ -122,15 +122,21 @@ def generate_result(datasets, classifier, path):
                     percentage,
                     NUMBER_OF_TRAINING_SETS)
 
-            print("{} Running on {}%".format(path, percentage), flush=True)
+            print("{} Running on {}%. Testing set count: {}/{}".format(
+                path, percentage, (len(results) + 1), len(datasets)),
+                flush=True)
             result[percentage]['raw'] = []
             for training_set in value:
                 clf = classifier()
                 data, target = split_data_target(training_set)
-                clf.fit(data, target)
 
-                data, target = split_data_target(test_set)
-                accuracy = clf.score(data, target)
+                if data:
+                    clf.fit(data, target)
+                    data, target = split_data_target(test_set)
+                    accuracy = clf.score(data, target)
+                else:
+                    accuracy = 0.0
+
                 result[percentage]['raw'].append(accuracy)
 
             result[percentage]['average'] = numpy.average(
