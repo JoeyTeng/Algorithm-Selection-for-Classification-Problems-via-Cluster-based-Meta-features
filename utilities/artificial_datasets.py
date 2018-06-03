@@ -104,13 +104,14 @@ class PlotGraph(object):
         cls.plot_offline(fig, path)
 
 
-def label(point, angles, increment):
-    x, y = point
-    point_y = (y - increment[1])
-    comparing_y = numpy.tan(angles) * (x - increment[0])
-    comparing_y = comparing_y.tolist()
-    comparing_y.sort()
-    count = bisect.bisect_left(comparing_y, point_y)
+def label(point, separators):
+    count = 0
+    for separator in separators:
+        matrix = numpy.matrix([
+            numpy.array(point) - numpy.array(separator[0]),
+            numpy.array(separator[1]) - numpy.array(separator[0])])
+        if numpy.linalg.det(matrix) < 0:
+            count += 1
 
     if (count % 2):
         return 1
@@ -132,6 +133,13 @@ def main(args):
         angles = ((numpy.array(list(range(n))) + 1) / (n + increment[4])
                   * numpy.pi / increment[2])
 
+    separators = []
+    for angle in angles:
+        separators.append((
+            (increment[0], increment[1]), (
+                numpy.cos(angle) + increment[0],
+                numpy.sin(angle) + increment[1])))
+
     points = [coordinate
               for coordinate in itertools.product(
                   range(number_of_points), repeat=2)]
@@ -139,15 +147,13 @@ def main(args):
     points = (points - 0) / (number_of_points - 1 - 0)  # Normalization
     points = points.tolist()
 
-    labeled_points = [(point[0], point[1], label(point, angles, increment))
+    labeled_points = [(point[0], point[1], label(point, separators))
                       for point in points]
 
     with open(path, 'w') as output:
         output.writelines(['{}, {}, {}\n'.format(*point)
                            for point in labeled_points])
-    json.dump(
-        (angles / numpy.pi).tolist(),
-        open("{}.angles.json".format(path), 'w'))
+    json.dump(separators, open("{}.separators.json".format(path), 'w'))
     return labeled_points
 
 
