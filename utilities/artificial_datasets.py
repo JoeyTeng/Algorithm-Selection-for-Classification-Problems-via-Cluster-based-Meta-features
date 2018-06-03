@@ -118,11 +118,9 @@ def label(point, separators):
     return 0
 
 
-def main(args):
+def intersection(args):
     n = args.n  # number of linear separators
     randomise = args.random
-    path = args.o
-    number_of_points = int((args.np) ** 0.5)
     increment = INCREMENT[args.intersection]
 
     if randomise:
@@ -140,6 +138,61 @@ def main(args):
                 numpy.cos(angle) + increment[0],
                 numpy.sin(angle) + increment[1])))
 
+    return separators
+
+
+def orthogonal(args):
+    n = args.n  # number of linear separators
+    randomise = args.random
+
+    if args.nh == -1 and args.nv != -1:
+        n_v = args.nv
+        n_h = n - n_v
+    elif args.nh != -1 and args.nv == -1:
+        n_h = args.nh
+        n_v = n - n_h
+    elif args.nh != -1 and args.nv != -1:
+        n_h = args.nh
+        n_v = args.nv
+    else:
+        n_h = n // 2
+        n_v = n - n_h
+
+    if randomise:
+        distance = [random.random() for i in range(n)]
+        horizontal = distance[n_v:][:n_h]
+        vertical = distance[:n_v]
+    else:
+        horizontal = (numpy.array(list(range(n_h))) + 1) / (n_h + 1)
+        vertical = (numpy.array(list(range(n_v))) + 1) / (n_v + 1)
+
+    separators = [(
+        (0.0, y),
+        (1.0, y)
+    ) for y in horizontal] + [(
+        (x, 0.0),
+        (x, 1.0)
+    ) for x in vertical]
+
+    return separators
+
+
+def main(args):
+    path = args.o
+    number_of_points = int((args.np) ** 0.5)
+
+    if args.intersection and args.orthogonal:
+        print("Please choose only one mode!")
+        return None
+    elif args.intersection:
+        separators = intersection(args)
+    elif args.orthogonal:
+        separators = orthogonal(args)
+    else:
+        print("Please choose any mode. -h to check details")
+        return None
+
+    number_of_points = int((args.np) ** 0.5)
     points = [coordinate
               for coordinate in itertools.product(
                   range(number_of_points), repeat=2)]
@@ -187,8 +240,8 @@ def parse_args():
     parser.add_argument('-n', action='store', type=int, default=0,
                         help='The number of linear separators in the dataset')
     parser.add_argument('--random', action='store_true',
-                        help=''.join(['state if you want to use randomised',
-                                      'angles (interval) for separators']))
+                        help=' '.join(['state if you want to use randomised',
+                                       'angles (interval) for separators']))
     parser.add_argument('-o', action='store', type=str, default='data.out',
                         help='Path to where the generated dataset is stored')
     parser.add_argument('--save_image_to', action='store', type=str,
@@ -197,13 +250,28 @@ def parse_args():
     parser.add_argument('-np', action='store', type=int,
                         default=900,  # A random choice though
                         help='The number of data instance you want')
-    parser.add_argument('intersection', action='store',
+    parser.add_argument('--intersection', action='store',
                         choices=['corner', 'side', 'centre'],
-                        help='Point of intersection of separators')
+                        default='',
+                        help=''.join(['Use tilted separators.',
+                                      'This indicates the point',
+                                      'of intersection of separators.',
+                                      'Default: \'\'']))
+    parser.add_argument('--orthogonal', action='store_true',
+                        help='Use orthogonal separators instead.')
+    parser.add_argument('-nh', action='store', type=int, default=-1,
+                        help=' '.join(['The number of horizontal',
+                                       'linear separators in the dataset',
+                                       'for orthogonal mode only']))
+    parser.add_argument('-nv', action='store', type=int, default=-1,
+                        help=' '.join(['The number of vertical',
+                                       'linear separators in the dataset',
+                                       'for orthogonal mode only']))
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = parse_args()
     points = main(args)
-    plot(points, args)
+    if points:
+        plot(points, args)
