@@ -19,10 +19,10 @@ import download_png
 
 
 INCREMENT = dict(
-    # -x, -y, angle/, random-angle, -uniform-angle
-    corner=(0, 0, 2, 0, -0.5),
+    # -x, -y, angle/, random-angle, +n for uniform
+    corner=(0, 0, 2, 0, 1),
     side=(),
-    centre=(0.5, 0.5, 1, 0.5, 0.5)
+    centre=(0.5, 0.5, 1, 0.5, 0)
 )
 
 
@@ -129,8 +129,8 @@ def main(args):
         angles = (angles - increment[3]) * numpy.pi / increment[2]
         angles = numpy.array(sorted(angles.tolist()))
     else:
-        angles = ((numpy.array(list(range(n))) / n) -
-                  increment[4]) * numpy.pi / increment[2]
+        angles = ((numpy.array(list(range(n))) + 1) / (n + increment[4])
+                  * numpy.pi / increment[2])
 
     points = [coordinate
               for coordinate in itertools.product(
@@ -189,7 +189,7 @@ def parse_args():
                         default="{}/data.png".format(os.getcwd()),
                         help='Path to where the graph plotted is stored')
     parser.add_argument('-np', action='store', type=int,
-                        default=30,  # A random choice though
+                        default=900,  # A random choice though
                         help='The number of data instance you want')
     parser.add_argument('intersection', action='store',
                         choices=['corner', 'side', 'centre'],
