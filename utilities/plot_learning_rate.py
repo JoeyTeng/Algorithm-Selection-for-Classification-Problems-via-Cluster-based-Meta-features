@@ -216,32 +216,31 @@ class PlotGraph(object):
     @staticmethod
     def logistic_linearisation(y):
         if y == 'formula':
-            return "ln(y^(-1) - 1) = kx + c"
+            return "-ln(-y + 1) = kx + c"
 
         y = numpy.array(y)
+        y = 1 - y
         for i in range(len(y)):
             if numpy.isclose([y[i]], [0]):
-                y[i] += INFINITESIMAL_FOR_INVERSE
+                y[i] += INFINITESIMAL_FOR_INVERSE  # Avoid inf after ln
 
-        y = (y ** (-1)) - 1
+        y = -numpy.log(y)
 
-        for i in range(len(y)):
-            if numpy.isclose([y[i]], [0]):
-                y[i] += INFINITESIMAL
-
-        return numpy.log(y)
+        return y
 
     @classmethod
     def lsq_logistic_fit(cls, _x, _y):
         y = cls.logistic_linearisation(_y)
         x = numpy.array(_x)
         k, c = numpy.polyfit(x, y, 1)
+        # Sampling & Normalise
         __x = numpy.array(list(range(len(_x) * 2)))
         __x = __x / (max(__x) - min(__x)) * (max(x) - min(x)) + min(x)
-        __y = 1 / (1 + numpy.exp(k * __x + c))
+
+        __y = 1 - numpy.exp(-1 * (k * __x + c))
         predicted_y = 1 / (1 + numpy.exp(k * x + c))
 
-        return (k, c), "y = 1 / (1 + e^(({})x + ({})))".format(
+        return (k, c), "y = 1 - (e^-(({})x + ({})))".format(
             k, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
     @classmethod
