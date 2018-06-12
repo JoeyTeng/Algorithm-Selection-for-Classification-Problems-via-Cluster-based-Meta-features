@@ -14,6 +14,7 @@ import random
 
 import numpy
 import plotly
+import sklearn.neighbors
 
 import download_png
 
@@ -177,22 +178,58 @@ def orthogonal(args):
     return separators
 
 
+def kNN(args):
+    n = args.n  # number of centroids
+    # Class h && class v
+    if args.nh == -1 and args.nv != -1:
+        n_v = args.nv
+        n_h = n - n_v
+    elif args.nh != -1 and args.nv == -1:
+        n_h = args.nh
+        n_v = n - n_h
+    elif args.nh != -1 and args.nv != -1:
+        n_h = args.nh
+        n_v = args.nv
+    else:
+        n_h = n // 2
+        n_v = n - n_h
+
+    return ([(random.random(), random.random(), 0) for i in range(n_h)] +
+            [(random.random(), random.random(), 1) for i in range(n_v)])
+
+
+class kNN_predict(object):
+    predictor = None
+
+    @classmethod
+    def __call__(cls, point, centroids, initialise=False):
+        if initialise or not cls.predictor:
+            cls.predictor = sklearn.neighbors.KNeighborsClassifier(
+                n_neighbors=len(centroids),
+                weights='distance')
+            X = numpy.array([[p[0], p[1]] for p in centroids])
+            y = numpy.array([p[2] for p in centroids])
+            cls.predictor.fit(X, y)
+        return cls.predictor.predict(numpy.array([point]))[0]
+
+
 def main(args):
     path = args.o
     number_of_points = int((args.np) ** 0.5)
+    mode = (
+        + (int(args.intersection != ''))
+        + (int(args.orthogonal) << 1)
+        + (int(args.kNN) << 2))
 
-    if args.intersection and args.orthogonal:
+    if mode == 0:
         print("Please choose only one mode!")
         return None
-    elif args.intersection:
-        separators = intersection(args)
-    elif args.orthogonal:
-        separators = orthogonal(args)
-    else:
+    elif (mode != 1 and
+          mode != (1 << 1) and
+          mode != (1 << 2)):
         print("Please choose any mode. -h to check details")
         return None
 
-    number_of_points = int((args.np) ** 0.5)
     points = [coordinate
               for coordinate in itertools.product(
                   range(number_of_points), repeat=2)]
@@ -200,13 +237,24 @@ def main(args):
     points = (points - 0) / (number_of_points - 1 - 0)  # Normalization
     points = points.tolist()
 
-    labeled_points = [(point[0], point[1], label(point, separators))
-                      for point in points]
+    if args.kNN:
+        centroids = kNN(args)
+        labeled_points = [(point[0], point[1], kNN_predict()(point, centroids))
+                          for point in points]
+        json.dump(centroids, open("{}.centroids.json".format(path), 'w'))
+    else:
+        if args.intersection:
+            separators = intersection(args)
+        elif args.orthogonal:
+            separators = orthogonal(args)
+
+        labeled_points = [(point[0], point[1], label(point, separators))
+                          for point in points]
+        json.dump(separators, open("{}.separators.json".format(path), 'w'))
 
     with open(path, 'w') as output:
         output.writelines(['{}, {}, {}\n'.format(*point)
                            for point in labeled_points])
-    json.dump(separators, open("{}.separators.json".format(path), 'w'))
     return labeled_points
 
 
@@ -266,6 +314,10 @@ def parse_args():
                         help=' '.join([
                             'The number of vertical linear separators',
                             'in the dataset for orthogonal mode only']))
+    parser.add_argument('--kNN', action='store_true',
+                        help=' '.join([
+                            'Use full-NN based method to assign the class.',
+                            'Assume --random by default.']))
     return parser.parse_args()
 
 
