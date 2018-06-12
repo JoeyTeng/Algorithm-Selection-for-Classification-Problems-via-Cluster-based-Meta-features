@@ -253,20 +253,19 @@ def parse_args():
     parser.add_argument('--intersection', action='store',
                         choices=['corner', 'side', 'centre'],
                         default='',
-                        help=''.join(['Use tilted separators.',
-                                      'This indicates the point',
-                                      'of intersection of separators.',
-                                      'Default: \'\'']))
+                        help=''.join([
+                            'Use tilted separators. This indicates the point',
+                            'of intersection of separators. Default: \'\'']))
     parser.add_argument('--orthogonal', action='store_true',
                         help='Use orthogonal separators instead.')
     parser.add_argument('-nh', action='store', type=int, default=-1,
-                        help=' '.join(['The number of horizontal',
-                                       'linear separators in the dataset',
-                                       'for orthogonal mode only']))
+                        help=' '.join([
+                            'The number of horizontal linear separators',
+                            'in the dataset for orthogonal mode only']))
     parser.add_argument('-nv', action='store', type=int, default=-1,
-                        help=' '.join(['The number of vertical',
-                                       'linear separators in the dataset',
-                                       'for orthogonal mode only']))
+                        help=' '.join([
+                            'The number of vertical linear separators',
+                            'in the dataset for orthogonal mode only']))
     return parser.parse_args()
 
 
