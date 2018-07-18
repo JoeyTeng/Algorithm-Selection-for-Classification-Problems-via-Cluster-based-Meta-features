@@ -2,7 +2,7 @@
 # @Email:  joey.teng.dev@gmail.com
 # @Filename: artificial_datasets.py
 # @Last modified by:   Joey Teng
-# @Last modified time: 07-May-2018
+# @Last modified time: 19-Jul-2018
 
 import argparse
 import bisect
@@ -275,7 +275,7 @@ def plot(points, args):
         number_of_separators=n,
         randomised_angles=randomise,
         number_of_points=len(points),
-        ratio_of_zero_to_all=len(data[0]) / len(points)
+        ratio_of_zero_to_all=len(data[0]['x']) / len(points)
     )
 
     PlotGraph()(path, data, additional_info)
