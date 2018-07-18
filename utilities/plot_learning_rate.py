@@ -238,7 +238,7 @@ class PlotGraph(object):
         __x = __x / (max(__x) - min(__x)) * (max(x) - min(x)) + min(x)
 
         __y = 1 - numpy.exp(-1 * (k * __x + c))
-        predicted_y = 1 / (1 + numpy.exp(k * x + c))
+        predicted_y = 1 - numpy.exp(-1 * (k * x + c))
 
         return (k, c), "y = 1 - (e^-(({})x + ({})))".format(
             k, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
