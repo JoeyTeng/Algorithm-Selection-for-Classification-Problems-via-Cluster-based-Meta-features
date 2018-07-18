@@ -2,7 +2,7 @@
 # @Email:  joey.teng.dev@gmail.com
 # @Filename: plot_learning_rate.py
 # @Last modified by:   Joey Teng
-# @Last modified time: 28-Apr-2018
+# @Last modified time: 18-Jul-2018
 
 import argparse
 import collections
@@ -21,7 +21,7 @@ import download_png
 
 INFINITESIMAL = 1e-323
 INFINITESIMAL_FOR_INVERSE = 1e-308
-PROCESS_COUNT = int(os.cpu_count() / 2)
+PROCESS_COUNT = int(os.cpu_count() / 3)
 
 
 class PlotGraph(object):
@@ -40,7 +40,7 @@ class PlotGraph(object):
         _data['max'].extend([0] * cls.origins)
         _data['min'].extend([0] * cls.origins)
 
-        coefficient, formula, fit_x, fit_y, predicted_y = cls.lsq_logistic_fit(
+        coefficient, formula, fit_x, fit_y, predicted_y = cls.power_law_fit(
             _data['x'], _data['y'])
         data = dict(
             x=_data['x'][:-cls.origins] or _data['x'],
@@ -242,6 +242,27 @@ class PlotGraph(object):
 
         return (k, c), "y = 1 - (e^-(({})x + ({})))".format(
             k, c), __x.tolist(), __y.tolist(), predicted_y.tolist()
+
+    @classmethod
+    def power_law_func(cls, n, a, b, alpha):
+        # acc(n) = a - bn^(-alpha)
+        return a - b * n ** (-alpha)
+
+    @classmethod
+    def power_law_fit(cls, _x, _y):
+        y = numpy.array(_y)
+        x = numpy.array(_x)
+        a, b, alpha = scipy.optimize.curve_fit(
+            cls.power_law_func, x, y, maxfev=100000)[0]
+        # Sampling & Normalise
+        __x = numpy.array(list(range(len(_x) * 2)))
+        __x = __x / (max(__x) - min(__x)) * (max(x) - min(x)) + min(x)
+
+        __y = cls.power_law_func(__x, a, b, alpha)
+        predicted_y = cls.power_law_func(x, a, b, alpha)
+
+        return (alpha, a, b), "acc(n) = {} - {}n^(-{})".format(
+            a, b, alpha), __x.tolist(), __y.tolist(), predicted_y.tolist()
 
     @classmethod
     def trapezium_rule(cls, _x, _y):
