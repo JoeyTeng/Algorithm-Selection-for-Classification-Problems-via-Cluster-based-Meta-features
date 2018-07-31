@@ -2,13 +2,13 @@
 # @Email:  joey.teng.dev@gmail.com
 # @Filename: extract_meta_features.py
 # @Last modified by:   Joey Teng
-# @Last modified time: 07-May-2018
+# @Last modified time: 31-Jul-2018
 
 # @Author: Joey Teng
 # @Email:  joey.teng.dev@gmail.com
 # @Filename: preprocessing.py
 # @Last modified by:   Joey Teng
-# @Last modified time: 09-Feb-2018
+# @Last modified time: 31-Jul-2018
 
 import argparse
 import collections
@@ -36,6 +36,10 @@ def main(path):
     print(path, flush=True)
 
     metas = json.load(open(path, 'r'))
+    if '0' not in metas:
+        metas['0'] = []
+    if '1' not in metas:
+        metas['1'] = []
     population = len(metas['0']) + len(metas['1'])
 
     meta_features = []
