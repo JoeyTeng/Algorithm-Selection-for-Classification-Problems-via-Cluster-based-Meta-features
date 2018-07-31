@@ -75,6 +75,7 @@ def main(path):
     json.dump(
         meta_features,
         open("{0}.output.json".format(path[:-len('.clusters.json')]), 'w'))
+    return meta_features
 
 
 def traverse(paths):
@@ -107,21 +108,22 @@ def parse_path():
     paths.extend(args.i)
     paths.sort()
 
-    return paths
+    return paths, args.r[0]
 
 
-def multiprocess(paths):
+def multiprocess(paths, path):
     pool = multiprocessing.Pool(
         PROCESS_COUNT)
     print("Mapping tasks...", flush=True)
-    pool.map(main, paths)
+    meta_features = list(pool.map(main, paths))
+    json.dump(meta_features, open('{}/all_features.json'.format(path), 'w'))
     pool.close()
     pool.join()
 
 
 if __name__ == '__main__':
-    paths = parse_path()
+    paths, path = parse_path()
 
-    multiprocess(paths)
+    multiprocess(paths, path)
 
     print("Program Ended", flush=True)
