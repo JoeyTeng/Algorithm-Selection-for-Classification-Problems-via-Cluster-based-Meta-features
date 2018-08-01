@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContactSheetIISettings>
+  <source imageSource="Folder" path="/Users/toujour/Documents/Research/E-STaR 2017/scripts/dataset/Learning_rate_results/DT copy 2" includeSubfolders="true" groupImages="false"/>
+  <document units="pixels" width="4335" height="10096" resolution="118.11" resUnits="pixels/cm" mode="RGB Color" bitDepth="8-bit" colorProfile="sRGB IEC61966-2.1" flattenLayers="true"/>
+  <thumbnail place="across first" cols="8" rows="23" bestFit="false" useAutospacing="false" horz="1 px" vert="1 px"/>
+  <caption enabled="false">
+    <font name="MinionPro-Regular" size="12"/>
+  </caption>
+  <date>2018-05-07T19:15:29</date>
+  <version>2.2.10</version>
+  <locale>en_US</locale>
+</ContactSheetIISettings>
