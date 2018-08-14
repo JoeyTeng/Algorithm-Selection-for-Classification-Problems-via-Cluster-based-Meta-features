@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContactSheetIISettings>
+  <source imageSource="Folder" path="/Users/toujour/Desktop/untitled folder/New Folder With Items copy" includeSubfolders="false" groupImages="false"/>
+  <document units="pixels" width="2724" height="16703" resolution="72" resUnits="pixels/cm" mode="RGB Color" bitDepth="8-bit" colorProfile="sRGB IEC61966-2.1" flattenLayers="true"/>
+  <thumbnail place="across first" cols="5" rows="36" bestFit="false" useAutospacing="false" horz="1 px" vert="1 px"/>
+  <caption enabled="false">
+    <font name="MinionPro-Regular" size="12"/>
+  </caption>
+  <date>2018-08-14T15:38:25</date>
+  <version>2.2.10</version>
+  <locale>en_US</locale>
+</ContactSheetIISettings>
