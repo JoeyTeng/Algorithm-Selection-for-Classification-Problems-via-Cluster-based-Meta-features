@@ -51,5 +51,7 @@ All scripts are coded for Python3.6/3.7
   - Do not run it directly
 - ./learning_rate.py
 - utilities/
+  - utilities/extract_meta_features.py:
+    - Extract meta-features from .clusters.json (raw clustering results file), not .output.json (suppose to contain meta-features, but depreciated)
 
 [WIP]
