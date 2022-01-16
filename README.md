@@ -6,7 +6,7 @@
 
 The initial object is to apply topology into meta-learning as a tool for characterisation of datasets. Yet, topology is a bit hard for me at that moment (and now), and thus I switched to an easier, conventional way of doing meta-learning.
 
-### Abstract (Copied from published paper)
+### Abstract (Copied from [published paper](https://github.com/JoeyTeng/Algorithm-Selection-for-Classification-Problems-via-Cluster-based-Meta-features/blob/ac06510052d486237c418dc568b7f31fa10bffcd/docs/IEEE%20Camera%20Ready.pdf))
 
 Meta-features describe the characteristics of the datasets to facilitate algorithm selection. This paper proposes a new set of meta-features based on clustering the instances within datasets. We propose the use of a greedy clustering algorithm, and evaluate the meta-features generated based on the learning curves produced by the Random Forest algorithm. We also compared the utility of the proposed meta-features against pre-existing meta-features described in the literature, and evaluated the applicability of these meta-features over a sample of UCI datasets. Our results show that these meta-features do indeed improve the performance when applied to the algorithm selection task.
 
